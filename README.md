@@ -1,7 +1,7 @@
 # BtnOS-M5core2
-* Button Operating System (BtnOS) is python app that runs on M5Stack Core2 hardware
+* Button Operating System (BtnOS) is a python app that runs on M5Stack Core2 hardware
 ## Introduction
-* BtnOS (Button Operating System) alpha version is a skeletal python application that runs on M5Stack Core2 hardware.
+* BtnOS (Button Operating System) is a skeletal python application that runs on M5Stack Core2 hardware.
 * Upto four(4) individual apps can be configured to run on it.
 
 ## Installation
