@@ -27,9 +27,9 @@ from m5_init import M5Init
 class M5InitTest(M5Init):
     """ an attempt to test all methods in m5_init.py """
 
-    def __init__(self, **kwargs):
-        
-        super(M5InitTest, self).__init__(**kwargs)
+    def __init__(self):
+
+        super(M5InitTest, self).__init__()
 
     def hard_reset_test(self):
         """ perform hard reset """
@@ -59,8 +59,8 @@ class M5InitTest(M5Init):
 
     def imu_test(self):
 
-        print("read_imu() returns IMU ID, 3-axis linear accl, 3-axis angular accl, timestamp and IMU temp  ..")
-        [print("  {} -> {}".format(item[0], item[1:][0])) for item in self.read_imu().items()]
+        print("returns a list of samples as a dict of ts, accl, gyro & temp and corresponding uom")
+        [print("{}> {}".format(i+1, sample)) for i, sample in enumerate(self.read_imu())]
 
     def hall_test(self):
 
@@ -71,22 +71,21 @@ class M5InitTest(M5Init):
 
         print("read_raw_temp -> {}".format(self.read_raw_temp()))
 
-    def imu_scan_test(self):
-
-        print("save_imu for {} samples at {} ms intervals -> ..".format(self.parms['imu_samples'], self.parms['imu_wait']))
-        self.save_imu_scan()
-
 
 if __name__ == "__main__":
     """ execute various methods sequentially """
 
-    m5t = M5InitTest(essid='TBD', pwd='????')
+    m5t = M5InitTest()
+    
+    m5t.parms['essid'] = 'T20'
+    m5t.parms['pwd'] = 'stacstac'
+    
+    print("parms -> {}".format(m5t.parms))
 
     tests = ["wifi_test",
              "imu_test",
              "hall_test",
              "cpu_temp_test",
-             "imu_scan_test",
              "sdcard_erase_test",
              "hard_reset_test"]
     try:

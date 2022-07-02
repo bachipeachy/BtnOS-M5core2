@@ -38,20 +38,11 @@ from sdcard import SDCard
 
 class M5Init:
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         """ auto start power up and tft services """
 
-        self.parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_samples': 10, 'imu_wait': 100}
-        for k, v in kwargs.items():
-            if k in self.parms.keys():
-                self.parms.update({k:v})
-            else:
-                print("warning, ignoring illegal parm -> ".format(k, v))
-
-        if self.parms['essid'] is None:
-            print("* missing wireless ssid ..")
-        if self.parms['pwd'] is None:
-            print("* missing wireless password ..")
+        self._parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_size': 10, 'imu_wait': 100,
+                       'imu_calibrate': False, 'imu_file': '/imu_samples.json'}        
 
         self.BLACK = ili9342c.BLACK
         self.BLUE = ili9342c.BLUE
@@ -70,6 +61,14 @@ class M5Init:
 
         self.greet()
         print("* M5Stack Core2 initialization complete")
+
+    @property
+    def parms(self):
+        return self._parms
+
+    @parms.setter
+    def parms(self, value):
+        self._parms = value
 
     def power_up(self):
         """ turn on M5Stack Core2 """
@@ -117,7 +116,7 @@ class M5Init:
             sdc = SDCard()
             vfs = uos.VfsFat(sdc)
             uos.mount(vfs, self.parms['mdir'])
-            print("Flash Memory root level listing -> {}\nSDCard root files {} -> {}".format(
+            print("* Flash Memory root level listing -> {}\nSDCard root files {} -> {}".format(
                 uos.listdir(), self.parms['mdir'], uos.listdir(self.parms['mdir'])))
         except OSError as e:
             if e.errno == errno.EPERM:
@@ -143,7 +142,7 @@ class M5Init:
 
         wlan = network.WLAN(network.STA_IF)
         wlan.active(True)
-        print("wifi connection active -> {}".format(wlan.isconnected()))
+        print("* wifi connection active -> {}".format(wlan.isconnected()))
         return wlan.isconnected()
 
     def connect_wifi(self):
@@ -155,25 +154,24 @@ class M5Init:
         wlan.active(True)
         i = 15
         if not wlan.isconnected():
-            print("connecting to wireless '{}' with {} sec timeout ...".format(self.parms['essid'], i))
+            print("* connecting to wireless '{}' with {} sec timeout ...".format(self.parms['essid'], i))
 
             try:
                 wlan.connect(self.parms['essid'], self.parms['pwd'])
             except Exception as e:
-                print("ERROR: {} .. check or missing/wrong essid/pwd info\n Stand by ..".format(e))
+                print("ERROR: {} .. check or missing/wrong essid/pwd info\nStand by ..".format(e))
 
             while not wlan.isconnected() and run:
                 if (time.time() - t1) > i:
                     run = False
         else:
-            print("wifi connection active -> {}".format(wlan.ifconfig()[0]))
+            print("* wifi connection active -> {}".format(wlan.ifconfig()[0]))
             return wlan.ifconfig()[0]
 
         if run:
-            print("wifi connection established -> {}".format(wlan.ifconfig()[0]))
+            print("* wifi connection established -> {}".format(wlan.ifconfig()[0]))
         else:
-            print("unable to connect to SSID-> '{}'".format(self.parms['essid']))
-
+            print("* unable to connect to SSID-> '{}'".format(self.parms['essid']))
         return wlan.ifconfig()[0]
 
     @staticmethod
@@ -182,7 +180,7 @@ class M5Init:
 
         wlan = network.WLAN(network.STA_IF)
         wlan.active(False)
-        print("wifi disconnected -> {}".format(wlan.ifconfig()[0]))
+        print("* wifi disconnected -> {}".format(wlan.ifconfig()[0]))
         return wlan.ifconfig()[0]
 
     @staticmethod
@@ -203,7 +201,7 @@ class M5Init:
 
         wlan = network.WLAN(network.STA_IF)
         wlan.active(True)
-        print("scanning wifi ..")
+        print("* scanning wifi ..")
         vals = wlan.scan()
 
         lines = []
@@ -220,60 +218,43 @@ class M5Init:
                 bars = 1
             lines.append((ssid, rssi, bars))
 
-        print("wifi scanned {} essid's".format(len(lines)))
+        print("* wifi scanned {} essid's".format(len(lines)))
         return lines
 
     def read_imu(self):
-        """  returns a dict of id, timestamp and readings as a list of 3-values tuple & uom, and temp """
+        """  returns a list of samples as a dict of ts, accl, gyro & temp and corresponding uom """
 
-        imu = {'id': self.sensor.whoami,
-               'ts': [time.time_ns(), 'ns'],
-               'accl': [self.sensor.acceleration, 'm/s/s'],
-               'gyro': [self.sensor.gyro, 'deg/s'],
-               'temp': round(self.sensor.temperature * 1.8 + 32, 1)}
+        imu = []
+        if self.parms["imu_calibrate"]:
+            print("* gyro_offset -> {}".format(self.sensor.calibrate()))
+
+        for i in range(self.parms['imu_size']):
+            imu.append({'ts': {'val': int(str(time.time_ns())[:-6]), 'uom': 'ms'},
+                        'accl': {'val': self.sensor.acceleration, 'uom': 'm/s/s'},
+                        'gyro': {'val': self.sensor.gyro, 'uom': 'deg/s'},
+                        'temp': {'val': round(self.sensor.temperature * 1.8 + 32, 1), 'uom': 'F'}})
+            time.sleep_ms(self.parms['imu_wait'])
         return imu
-
-    def save_imu_scan(self):
-        """ save IMU data after gyro calibration to SDCard for a given samples count and wait time as init parms """
-
-        self.mount_sd()
-        fn = self.parms['mdir'] + "/imu_scan" + ".csv"
-        with open(fn, "w") as f:
-            header = "timestamp,accl_x,accl_y,accl_z,gyro_x,gyro_y,gyro_z,\n"
-            f.write(header)
-            gyro_offset = self.sensor.calibrate()
-            print("gyro_offset -> {}".format(gyro_offset))
-            print(header, end='')
-            for n in range(self.parms['imu_samples']):
-                ts = time.time_ns()
-                accl = self.sensor.acceleration
-                gyro = self.sensor.gyro
-                line = str(ts) + ',' + str(accl[0]) + ',' + str(accl[1]) + ',' + str(accl[2]) \
-                       + ',' + str(gyro[0]) + ',' + str(gyro[1]) + ',' + str(gyro[2]) + '\n'
-                f.write(line)
-                print(n + 1, '>', line, end='')
-                time.sleep_ms(self.parms['imu_wait'])
-        return gyro_offset
 
     @staticmethod
     def read_hall_sensor():
         """  returns a dict  of timestamp, 3d-readings and their uom """
         hs_val = {'ts': [time.time_ns(), 'ns'],
                   'hs': [hall_sensor(), 'micTes']}
-
         return hs_val
 
     @staticmethod
     def read_raw_temp():
         """  returns raw CPU temperature in def F """
-
         return round(raw_temperature(), 1)
 
+        
     def erase_sd(self, path):
         """" on SDCard erase files and empty directories one at time """
 
         try:
-            print("contents in sdcard before erase {} -> {}".format(self.parms['mdir'], uos.listdir(self.parms['mdir'])))
+            print("* contents in sdcard before erase {} -> {}".format(
+                self.parms['mdir'], uos.listdir(self.parms['mdir'])))
 
         except Exception as e:
             print("ERROR: {}".format(e))
@@ -283,21 +264,23 @@ class M5Init:
 
         try:
             uos.remove(self.parms['mdir'] + path)
-            print("success removed'{}'".format(self.parms['mdir'] + path))
-            print("contents in sdcard after erase {} -> {}".format(self.parms['mdir'], uos.listdir(self.parms['mdir'])))
+            print("* success removed'{}'".format(self.parms['mdir'] + path))
+            print("* contents in sdcard after erase {} -> {}".format(
+                self.parms['mdir'], uos.listdir(self.parms['mdir'])))
 
         except OSError as e:
             if e.errno == errno.ENOENT:
                 print("ERRPR: {} erase failed did not find '{}'".format(e, self.parms['mdir'] + path))
             else:
-                print("checking if path '{}' is a dir".format(path))
+                print("* checking if path '{}' is a dir".format(path))
             if e.errno == errno.EISDIR:
                 try:
                     ct = len([f for f in uos.listdir(self.parms['mdir'] + path)])
                     if ct == 0:
                         uos.rmdir(self.parms['mdir'] + path)
-                        print("success removed empty dir {}".format(self.parms['mdir'] + path))
-                        print("contents in sdcard after erase {} -> {}".format(self.parms['mdir'], uos.listdir(self.parms['mdir'])))
+                        print("* success removed empty dir {}".format(self.parms['mdir'] + path))
+                        print("* contents in sdcard after erase {} -> {}".format(
+                            self.parms['mdir'], uos.listdir(self.parms['mdir'])))
                     else:
                         print("{}: dir '{}' is not empty has {} entry -> {}".format(
                             e, self.parms['mdir'] + path, ct, uos.listdir(self.parms['mdir'] + path)))

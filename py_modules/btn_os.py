@@ -23,21 +23,22 @@ SOFTWARE.
 """
 
 import time
+import json
+import uos
 
 import vga1_16x16 as font16
 import vga1_8x8 as font8
 from focaltouch import FocalTouch
-
 from m5_init import M5Init
 
 
 class Bos(M5Init):
     ctx = dict(btn=True, pallet=-1, pen=0)
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         """ run app forever until hardware btn_c is 'HELD' for hard reset or haedware btn_a 'HELD' for power down """
 
-        super(Bos, self).__init__(**kwargs)
+        super(Bos, self).__init__()
 
         self.color = (self.WHITE, self.BLUE, self.RED, self.GREEN,
                       self.CYAN, self.MAGENTA, self.YELLOW, self.BLACK)
@@ -159,6 +160,21 @@ class Bos(M5Init):
         touch = FocalTouch(self.i2c, self.btns)
         return touch
 
+    def install_app(self, app, **kwargs):
+
+        if app[0] in self.abtns.keys():
+            self.abtns[app[0]]['lbl'] = app[1]
+            tbtn = getattr(self, 'tbtn' + app[0][-1])
+            for k, v in kwargs.items():
+                if k in tbtn.keys():
+                    tbtn[k]['lbl'] = v
+                else:
+                    print("Error parm '{}' not in btn_5 thro' btn_8 ".format(k))
+                    self.hard_reset()
+        else:
+            print("Error parm '{}' not in btn_1 thro' btn_4 ".format(app[0]))
+            self.hard_reset()
+
     def home_screen(self):
 
         self.btns = self.define_btns()
@@ -166,7 +182,7 @@ class Bos(M5Init):
         self.edit('btn_w')
         self.write(tl=["BtnOS"], f=font16, xl=[120], yl=[88], fg=self.GREEN)
         self.write(tl=["(c) bachipeachy"], f=font8, xl=[96], yl=[112], fg=self.GREEN)
-        self.write(tl=["Alpha version"], f=font8, xl=[112], yl=[128])
+        self.write(tl=["version 2"], f=font8, xl=[124], yl=[128])
         [self.paint(k, v) for k, v in self.btns.items() if k not in ['btn_w', 'btn_a', 'btn_b', 'btn_c']]
         self.touch = self.enable_touch()
 
@@ -210,22 +226,37 @@ class Bos(M5Init):
                     continue
                 elif y in range(self.loc_w[1], self.loc_w[1] + self.loc_w[3]):
                     app_x = 'app_' + uid[-1]
-                    getattr(self, app_x)(uid, x, y)
+                    try:
+                        getattr(self, app_x)(uid, x, y)
+                    except Exception as e:
+                        print("rt> {} -- missing implementation?".format(e))
                 elif i > 0 and self.touch.touch_detected(self.btns[uid]['loc']):
                     print("rt> exiting run {} task loop".format(uid))
                     break
                 elif self.touch.touch_detected(self.loc_5):
                     tsk = 'tsk_' + uid[-1] + '5'
-                    getattr(self, tsk)(uid, 'btn_5')
+                    try:
+                        getattr(self, tsk)(uid, 'btn_5')
+                    except Exception as e:
+                        print("rt> {} -- missing implementation?".format(e))
                 elif self.touch.touch_detected(self.loc_6):
                     tsk = 'tsk_' + uid[-1] + '6'
-                    getattr(self, tsk)(uid, 'btn_6')
+                    try:
+                        getattr(self, tsk)(uid, 'btn_6')
+                    except Exception as e:
+                        print("rt> {} -- missing implementation?".format(e))
                 elif self.touch.touch_detected(self.loc_7):
                     tsk = 'tsk_' + uid[-1] + '7'
-                    getattr(self, tsk)(uid, 'btn_7')
+                    try:
+                        getattr(self, tsk)(uid, 'btn_7')
+                    except Exception as e:
+                        print("rt> {} -- missing implementation?".format(e))
                 elif self.touch.touch_detected(self.loc_8):
                     tsk = 'tsk_' + uid[-1] + '8'
-                    getattr(self, tsk)(uid, 'btn_8')
+                    try:
+                        getattr(self, tsk)(uid, 'btn_8')
+                    except Exception as e:
+                        print("rt> {} -- missing implementation?".format(e))
             tp_prev = tp
             i = i + 1
 
@@ -375,90 +406,6 @@ class Bos(M5Init):
         else:
             print("b4> Not Implemented ..")
 
-    def app_1(self, uid, x, y):
-        """ method to overide typical for all apps """
-
-        print("a1> {}".format(uid))
-        self.help_app(uid)
-
-    def app_2(self, uid, x, y):
-        print("a2> {}".format(uid))
-        self.help_app(uid)
-
-    def app_3(self, uid, x, y):
-        print("a3> {}".format(uid))
-        self.help_app(uid)
-
-    def app_4(self, uid, x, y):
-        print("a4> {}".format(uid))
-        self.help_app(uid)
-
-    def tsk_15(self, uid, uidt):
-        """ task to overide typical for all tasks """
-
-        print("t15> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_16(self, uid, uidt):
-        print("t16> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_17(self, uid, uidt):
-        print("t17> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_18(self, uid, uidt):
-        print("t18> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_25(self, uid, uidt):
-        print("t25> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_26(self, uid, uidt):
-        print("t26> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_27(self, uid, uidt):
-        print("t27> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_28(self, uid, uidt):
-        print("t28> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_35(self, uid, uidt):
-        print("t34> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_36(self, uid, uidt):
-        print("t36> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_37(self, uid, uidt):
-        print("t37> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_38(self, uid, uidt):
-        print("t38> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_45(self, uid, uidt):
-        print("t45> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_46(self, uid, uidt):
-        print("t46> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_47(self, uid, uidt):
-        print("t47> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
-    def tsk_48(self, uid, uidt):
-        print("t48> {}:{}".format(uid, uidt))
-        self.help_tsk(uidt)
-
     def write(self, tl, f=font8, xl=None, yl=None, fg=None, bg=None):
         """ write txt from a list at x,y coordinates in a list"""
 
@@ -471,21 +418,7 @@ class Bos(M5Init):
         if bg is None:
             bg = self.BLACK
 
-        [self.tft.text(f, t, xl[i], yl[i], fg, bg) for i, t in enumerate(tl)]
-
-    def help_app(self, uid):
-
-        app = str("Bos.app_" + str(uid[-1]))
-        tx = "<In " + app + " loop>"
-        self.write(tl=[tx], yl=[56], f=font16)
-        self.write(tl=["* overide " + app + " method"], yl=[96], f=font16, fg=self.RED)
-        self.write(["<touched window btn>"], yl=[136], f=font16, fg=self.YELLOW)
-
-    def help_tsk(self, uidt):
-
-        self.edit('btn_w')
-        tx = "  <touched " + str(uidt) + ">"
-        self.write([tx], yl=[136], f=font16)
+        [self.tft.text(f, str(t), xl[i], yl[i], fg, bg) for i, t in enumerate(tl)]
 
     def pallet(self, uid):
         """ choose current pixel color for drawing - e.g, doodle app """
@@ -523,15 +456,29 @@ class Bos(M5Init):
             self.tft.hline(x1, y, w, self.YELLOW)
         return pt
 
+    def imu(self):
+        """ save 'ts', 'accl', 'gyro', 'hall' and 'temp' sensor vals to SDCard as '/sd/imu_scan.json' """
+
+        self.mount_sd()
+        fn = self.parms['mdir'] + self.parms['imu_file']
+        with open(fn, "w") as f:
+            gyro_offset = self.sensor.calibrate()
+            json.dump(self.read_imu(), f)
+            
+        stat = uos.stat(fn)[-4:]
+        self.release_spi2()
+        return (fn, stat, gyro_offset)
+
 
 if __name__ == "__main__":
 
     os = Bos()
     os.home_screen()
-
+    
     try:
         os.run_app()
     except Exception as e:
         print("main> oops I blew up ..", e)
     finally:
         os.hard_reset()
+        

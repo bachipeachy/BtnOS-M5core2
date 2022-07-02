@@ -27,10 +27,10 @@ from btn_os import Bos
 class Wifi(Bos):
     """ sample wifi app """
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         """ inherit all BtnOS methods and properties """
 
-        super(Wifi, self).__init__(**kwargs)
+        super(Wifi, self).__init__()
 
     def app_1(self, uid, x, y):
         print("a1> {}".format(uid))
@@ -63,6 +63,8 @@ class Wifi(Bos):
 
         lines = self.scan_wifi()
         ssid = "ssid's scanned " + str(len(lines))
+        if len(lines) == 0:
+            return
         self.write([ssid, "sig", "bars"], xl=[12, 162, 248], yl=[44, 44, 44], fg=self.YELLOW)
 
         for i in range(14):

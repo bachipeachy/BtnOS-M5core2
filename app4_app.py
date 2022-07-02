@@ -21,47 +21,28 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
 from btn_os import Bos
 
 
-class Dodl(Bos):
+class App4(Bos):
+    """ sample 'template' app """
 
     def __init__(self):
         """ inherit all BtnOS methods and properties """
 
-        super(Dodl, self).__init__()
+        super(App4, self).__init__()
 
-    def app_3(self, uid, x, y):
-        """ Doodle app invoked by Btn_3 shows output on btn_w space """
+    def app_4(self, uid, x, y):
+        print("a4> {}".format(uid))
 
-        clr = self.color[Bos.ctx['pallet']]
-        pt = Bos.ctx['pen']
-        [[self.tft.pixel(x + i, y + j, clr) for j in range(pt)] for i in range(pt)]
+    def tsk_45(self, uid, uidt):
+        print("t45> {}:{}".format(uid, uidt))
 
-    def tsk_35(self, uid, uidt):
-        """ Btn_5 selects color pallet """
+    def tsk_46(self, uid, uidt):
+        print("t46> {}:{}".format(uid, uidt))
 
-        print("t35> {}:{}".format(uid, uidt))
-        clr = self.pallet('btn_5')
-        print("t35> set color# {}".format(clr))
-        return clr
+    def tsk_47(self, uid, uidt):
+        print("t47> {}:{}".format(uid, uidt))
 
-    def tsk_36(self, uid, uidt):
-        """ Btn_6 selects pen thickness """
-
-        print("t36> {}:{}".format(uid, uidt))
-        pt = self.pen('btn_6')
-        print("t36> set pen# {}".format(pt))
-        return pt
-
-    def tsk_37(self, uid, uidt):
-        """ Btn_7 is unused """
-
-        print("t37> {}:{}".format(uid, uidt))
-
-    def tsk_38(self, uid, uidt):
-        """ Btn_8 is erases btn_w space """
-
-        print("t38> {}:{}".format(uid, uidt))
-        self.edit('btn_w')
+    def tsk_48(self, uid, uidt):
+        print("t48> {}:{}".format(uid, uidt))
