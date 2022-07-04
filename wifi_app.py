@@ -65,6 +65,7 @@ class Wifi(Bos):
         ssid = "ssid's scanned " + str(len(lines))
         if len(lines) == 0:
             return
+        self.edit('btn_w')
         self.write([ssid, "sig", "bars"], xl=[12, 162, 248], yl=[44, 44, 44], fg=self.YELLOW)
 
         for i in range(14):

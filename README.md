@@ -2,7 +2,7 @@
 * Button Operating System (BtnOS) is a touch enabled event/action framework runs on M5Stack Core2 hardware.
 ## Introduction
 * Button Operating System (BtnOS) is a touch enabled event/action framework that runs on M5Stack Core2 hardware.
-* The 'Bos' python class implemented in /py_modules/btn_os.py enables up to four(4) individual apps.
+* The 'Bos' python class implemented in /py_modules/btn_os.py can execute up to four(4) individual apps.
 * The home_screen() provides access to these apps.
 * The apps run one at a time inside a single event/action inner loop.
 * Once an app is selected, it calls an app_screen() associated with the selected app.

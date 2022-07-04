@@ -22,8 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import time
 import json
+import time
+
 import uos
 
 import vga1_16x16 as font16
@@ -105,6 +106,7 @@ class Bos(M5Init):
                       'fill': True, 'font': font16},
             'btn_8': {'loc': self.loc_8, 'lbl': 'Btn8', 'border': self.MAGENTA, 'fg': self.YELLOW, 'bg': self.BLACK,
                       'fill': True, 'font': font16}}
+        self.touch = None
 
     @property
     def abtns(self):
@@ -182,12 +184,13 @@ class Bos(M5Init):
         self.edit('btn_w')
         self.write(tl=["BtnOS"], f=font16, xl=[120], yl=[88], fg=self.GREEN)
         self.write(tl=["(c) bachipeachy"], f=font8, xl=[96], yl=[112], fg=self.GREEN)
-        self.write(tl=["version 2"], f=font8, xl=[124], yl=[128])
+        self.write(tl=["version 3"], f=font8, xl=[124], yl=[128])
         [self.paint(k, v) for k, v in self.btns.items() if k not in ['btn_w', 'btn_a', 'btn_b', 'btn_c']]
         self.touch = self.enable_touch()
 
     def app_screen(self, uid, tbtn):
 
+        saved_lbl = None
         [self.btns.pop(k) for k in self.btns.keys() if k not in (uid, 'btn_w', 'btn_a', 'btn_b', 'btn_c')]
         if uid in ('btn_1', 'btn_2', 'btn_3', 'btn_4'):
             saved_lbl = self.btns[uid]['lbl']
@@ -214,6 +217,8 @@ class Bos(M5Init):
 
         tp_prev = None
         i = 0
+        x = None
+        y = None
         while True:
             tp = self.touch.touch_points
             if tp_prev != tp:
@@ -279,7 +284,7 @@ class Bos(M5Init):
         return {'dt': dt, 'tm': tm}
 
     def paint(self, k, v):
-        " refresh screen for chosen btn "
+        """ refresh screen for chosen btn """
 
         loc = v['loc']
         if v['fill']:
@@ -288,7 +293,7 @@ class Bos(M5Init):
         self.tft.text(v['font'], v['lbl'], loc[0] + 6, loc[1] + 12, v['fg'], v['bg'])
 
     def edit(self, uid, **kwargs):
-        " configure btn properties "
+        """ configure btn properties """
 
         for k, v in kwargs.items():
             if self.btns[uid][k] != v:
@@ -456,29 +461,56 @@ class Bos(M5Init):
             self.tft.hline(x1, y, w, self.YELLOW)
         return pt
 
-    def imu(self):
-        """ save 'ts', 'accl', 'gyro', 'hall' and 'temp' sensor vals to SDCard as '/sd/imu_scan.json' """
+    def imu_json(self):
+        """ save 'ts', 'accl', 'gyro', and 'temp' sensor vals to SDCard as '/sd/imu.json'.
+        writes all records at a time for self.parms['imu_size'] count -- memory intensive  """
 
         self.mount_sd()
-        fn = self.parms['mdir'] + self.parms['imu_file']
+        fn = self.parms['mdir'] + self.parms['json_file']
         with open(fn, "w") as f:
             gyro_offset = self.sensor.calibrate()
             json.dump(self.read_imu(), f)
-            
+
         stat = uos.stat(fn)[-4:]
         self.release_spi2()
-        return (fn, stat, gyro_offset)
+        return fn, stat, gyro_offset
+
+    def imu_csv(self):
+        """ save 'ts', 'accl', 'gyro', and 'temp' sensor vals to SDCard as '/sd/imu.csv'.
+        writes one record at a time for self.parms['imu_size'] count -- memory friendly """
+
+        self.mount_sd()
+        fn = self.parms['mdir'] + self.parms['csv_file']
+        with open(fn, "w") as f:
+            gyro_offset = self.sensor.calibrate()
+            header = "timestamp,accl_x,accl_y,accl_z,gyro_x,gyro_y,gyro_z,temp\n"
+            f.write(header)
+            print(header, end='')
+            for n in range(self.parms['imu_size']):
+                ts = int(str(time.time_ns())[:-6])
+                accl = self.sensor.acceleration
+                gyro = self.sensor.gyro
+                temp = round(self.sensor.temperature * 1.8 + 32, 1)
+
+                line = str(ts) + ',' + str(accl[0]) + ',' + str(accl[1]) + ',' + str(accl[2]) \
+                       + ',' + str(gyro[0]) + ',' + str(gyro[1]) + ',' + str(gyro[2]) + ',' + str(temp) + '\n'
+                f.write(line)
+                print(n + 1, '>', line, end='')
+                time.sleep_ms(self.parms['imu_wait'])
+
+        stat = uos.stat(fn)[-4:]
+        self.release_spi2()
+        return fn, stat, gyro_offset
 
 
 if __name__ == "__main__":
 
     os = Bos()
     os.home_screen()
-    
+
     try:
         os.run_app()
     except Exception as e:
         print("main> oops I blew up ..", e)
     finally:
         os.hard_reset()
-        

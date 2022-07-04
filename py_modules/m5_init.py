@@ -25,13 +25,14 @@ SOFTWARE.
 import errno
 import time
 
-import axp202c
 import ili9342c
 import network
 import uos
-import vga1_16x16 as font16
 from esp32 import raw_temperature, hall_sensor
 from machine import SoftI2C, Pin, SPI, soft_reset, reset
+
+import axp202c
+import vga1_16x16 as font16
 from mpu6886 import MPU6886, SF_DEG_S
 from sdcard import SDCard
 
@@ -42,7 +43,7 @@ class M5Init:
         """ auto start power up and tft services """
 
         self._parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_size': 10, 'imu_wait': 100,
-                       'imu_calibrate': False, 'imu_file': '/imu_samples.json'}        
+                       'imu_calibrate': False, 'json_file': '/imu.json', 'csv_file': '/imu.csv'}
 
         self.BLACK = ili9342c.BLACK
         self.BLUE = ili9342c.BLUE
@@ -248,7 +249,6 @@ class M5Init:
         """  returns raw CPU temperature in def F """
         return round(raw_temperature(), 1)
 
-        
     def erase_sd(self, path):
         """" on SDCard erase files and empty directories one at time """
 

@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
 import time
 
 from btn_os import Bos
@@ -36,6 +35,7 @@ class Imu(Bos):
 
     def app_2(self, uid, x, y):
         """ 'IMU' app invoked by Btn_2 shows output on btn_w space """
+
         print("a2> {} x:{} y:{}".format(uid, x, y))
 
     def tsk_25(self, uid, uidt):
@@ -43,62 +43,52 @@ class Imu(Bos):
 
         print("t25> {}:{}".format(uid, uidt))
         self.parms['imu_wait'] = 500
-        self.imu_accl()
+        self.parms['imu_calibrate'] = False
+        hd = ["accl_x", "accl_y", "accl_z", "m/s/s"]
+        self.imu_data(hd, calib="No")
 
     def tsk_26(self, uid, uidt):
         """ Btn_6 display imu 'gyro' data """
 
         print("t26> {}:{}".format(uid, uidt))
-        self.parms['size'] = 9
-        self.imu_gyro()
-
-    def tsk_27(self, uid, uidt):
-        """ Btn_7 save 'accl' and 'gyro' data to SDCard """
-
-        print("t27> {}:{}".format(uid, uidt))
-        self.imu_save()
-
-    def tsk_28(self, uid, uidt):
-        """ Btn_8 'Wipe' erases btn_w space """
-
-        print("t28> {}:{}".format(uid, uidt))
-        self.edit('btn_w')
-
-    def imu_accl(self):
-        """ display imu 'accl' for parms['size] samples with parms['wait'] milli sec pause """
-
-        hd = ["accl_x", "accl_y", "accl_z", "m/s/s"]
-        self.write(hd, xl=[24, 128, 216, 280], yl=[48, 48, 48, 48], fg=self.WHITE)
-
-        [self.write([v['accl']['val'][0], v['accl']['val'][1], v['accl']['val'][2]],
-                    xl=[0, 104, 208], yl=[60 + i * 12, 60 + i * 12, 60 + i * 12])
-         for i, v in enumerate(self.read_imu())]
-
-        self.write(["ts:" + str(time.time()) + " sec, wait:" + str(str(self.parms['imu_wait'])) +
-                    " ms, calib:No"],
-                   xl=[0], yl=[188], fg=self.WHITE)
-
-    def imu_gyro(self):
-        """ display imu 'gyro' for parms['size] samples with parms['wait'] milli sec pause """
+        self.parms['size'] = 11
         self.parms['imu_calibrate'] = True
         hd = ["gyro_x", "gyro_y", "gyro_z", "deg/s"]
-        self.write(hd, xl=[24, 128, 216, 280], yl=[48, 48, 48, 48], fg=self.YELLOW)
+        self.imu_data(hd, calib="Yes")
+
+    def tsk_27(self, uid, uidt):
+        """ Btn_7 save 'accl', 'gyro' & 'temp' data to SDCard json format """
+
+        print("t27> {}:{}".format(uid, uidt))
+        fn, stat, gyro_offset = self.imu_json()
+        self.imu_fdback(fn, stat, gyro_offset)
+
+    def tsk_28(self, uid, uidt):
+        """ Btn_8 save 'accl', 'gyro' & 'temp' data to SDCard csv format """
+
+        print("t28> {}:{}".format(uid, uidt))
+        fn, stat, gyro_offset = self.imu_csv()
+        self.imu_fdback(fn, stat, gyro_offset)
+
+    def imu_data(self, hd, calib):
+        """ display data """
+
+        self.edit('btn_w')
+        self.write(hd, xl=[8, 112, 208, 280], yl=[48, 48, 48, 48])
 
         [self.write([v['gyro']['val'][0], v['gyro']['val'][1], v['gyro']['val'][2]],
                     xl=[0, 104, 208], yl=[60 + i * 12, 60 + i * 12, 60 + i * 12])
          for i, v in enumerate(self.read_imu())]
-        self.parms['imu_calibrate'] = False
 
-        self.write(["ts:" + str(time.time()) + " sec, wait:" + str(str(self.parms['imu_wait'])) +
-                    " ms, calib:Yes"],
-                   xl=[0], yl=[188], fg=self.YELLOW)
+        self.write(
+            ["ts:" + str(time.time()) + " sec, wait:" + str(str(self.parms['imu_wait'])) + " ms, calib:" + calib],
+            yl=[184])
 
-    def imu_save(self):
-        """ save 'ts', 'accl', 'gyro' and data to SDCard as '/sd/imu_scan.json' """
+    def imu_fdback(self, fn, stat, gyro_offset):
+        """ display feedback from action """
 
-        fn, stat, gyro_offset = self.imu()
         self.edit('btn_w')
         tx = [('', 'Processing Details'), ("filename:", fn), ("size:", str(stat[0]) + ' bytes'),
-              ("timestamp:", stat[-1]), ("gyroCalib:", gyro_offset)]
+              ("file_ts:", stat[-1]), ("gyroCalib:", gyro_offset)]
         for i, v in enumerate(tx):
             self.write([v[0], v[1]], xl=[0, 80], yl=[46 + i * 16, 46 + i * 16])
