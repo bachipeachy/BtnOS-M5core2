@@ -445,11 +445,19 @@ class Bos(M5Init):
         self.btns = self.define_btns()
         self.btns.update(self.abtns)
         self.edit('btn_w')
-        self.write(tl=["BtnOS"], f=font16, xl=[120], yl=[88], fg=self.GREEN)
-        self.write(tl=["(c) bachipeachy"], f=font8, xl=[96], yl=[112], fg=self.GREEN)
-        self.write(tl=["version 4"], f=font8, xl=[124], yl=[128])
+        self.splash()
         [self.paint(k, v) for k, v in self.btns.items() if k not in ['btn_w', 'btn_a', 'btn_b', 'btn_c']]
         self.touch = self.enable_touch()
+
+    def splash(self):
+
+        self.tft.rect(8, 48, 304, 144, self.WHITE)
+        self.write(tl=["BtnOS"], font=font16, xl=[120], yl=[80])
+        self.write(tl=["(c) bachipeachy"], xl=[96], yl=[104])
+        self.write(tl=["version 4"], xl=[124], yl=[120])
+        self.write(tl=["btn_a", "btn_b", "btn_c"], xl=[30, 140, 260], yl=[152, 152, 152], fg=self.YELLOW)        
+        self.write(tl=["shutdown", "homescreen", "rerun"], xl=[18, 120, 260], yl=[164, 164, 164])
+        self.write(['O', 'O', 'O'], xl=[40, 152, 272], yl=[172, 172, 172], font=font16, fg=self.RED)
 
     def app_screen(self, uid, tbtn):
 
@@ -575,7 +583,7 @@ class Bos(M5Init):
     def btn_b(self, btn):
 
         if btn['btn_b']['action'] is not None:
-            print("bb> Not Implemented ..")
+            self.home_screen()
 
     def btn_c(self, btn):
 
@@ -676,9 +684,11 @@ class Bos(M5Init):
         else:
             print("b4> Not Implemented ..")
 
-    def write(self, tl, f=font8, xl=None, yl=None, fg=None, bg=None):
+    def write(self, tl, font=None, xl=None, yl=None, fg=None, bg=None):
         """ write txt from a list at x,y coordinates in a list"""
 
+        if font is None:
+            font = font8
         if xl is None:
             xl = [0]
         if yl is None:
@@ -688,7 +698,7 @@ class Bos(M5Init):
         if bg is None:
             bg = self.BLACK
 
-        [self.tft.text(f, str(t), xl[i], yl[i], fg, bg) for i, t in enumerate(tl)]
+        [self.tft.text(font, str(t), xl[i], yl[i], fg, bg) for i, t in enumerate(tl)]
 
     def pallet(self, uid):
         """ choose current pixel color for drawing - e.g, doodle app """
