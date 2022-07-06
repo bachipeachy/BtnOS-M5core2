@@ -23,7 +23,7 @@ SOFTWARE.
 """
 import time
 
-from btn_os import Bos
+from btn_os_p import Bos
 
 
 class Imu(Bos):
@@ -57,19 +57,22 @@ class Imu(Bos):
         self.imu_data(hd, calib="Yes")
 
     def tsk_27(self, uid, uidt):
-        """ Btn_7 save 'accl', 'gyro' & 'temp' data to SDCard json format """
+        """ Btn_7 sets the wait time for imu samples """
 
         print("t27> {}:{}".format(uid, uidt))
-        fn, stat, gyro_offset = self.imu_json()
-        self.imu_fdback(fn, stat, gyro_offset)
+        size = self.set_imu_size('btn_7')
+        print("t27> set imu sampling size {}".format(size))
+        return size
 
     def tsk_28(self, uid, uidt):
         """ Btn_8 save 'accl', 'gyro' & 'temp' data to SDCard csv format """
 
         print("t28> {}:{}".format(uid, uidt))
+        self.write(["saving", self.parms['imu_size'], "samples every", self.parms['imu_wait'], "ms"],
+                   xl=[0, 56, 96, 208, 248], yl=[184, 184, 184, 184, 184])
         fn, stat, gyro_offset = self.imu_csv()
         self.imu_fdback(fn, stat, gyro_offset)
-
+        
     def imu_data(self, hd, calib):
         """ display data """
 
@@ -78,7 +81,7 @@ class Imu(Bos):
 
         [self.write([v['gyro']['val'][0], v['gyro']['val'][1], v['gyro']['val'][2]],
                     xl=[0, 104, 208], yl=[60 + i * 12, 60 + i * 12, 60 + i * 12])
-         for i, v in enumerate(self.read_imu())]
+         for i, v in enumerate(self.read_imu()) if i<10]
 
         self.write(
             ["ts:" + str(time.time()) + " sec, wait:" + str(str(self.parms['imu_wait'])) + " ms, calib:" + calib],

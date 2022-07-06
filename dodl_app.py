@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from btn_os import Bos
+from btn_os_p import Bos
 
 
 class Dodl(Bos):

@@ -21,27 +21,25 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from m5_init import M5Init
+from btn_os_p import Bos
 
 
-class M5InitTest(M5Init):
-    """ an attempt to test all methods in m5_init.py """
+
+class BosTest(Bos):
+    """ an attempt to test all methods in class M5Init """
 
     def __init__(self):
 
-        super(M5InitTest, self).__init__()
+        super(BosTest, self).__init__()
 
     def hard_reset_test(self):
         """ perform hard reset """
-
         self.hard_reset()
 
     def powerdown_test(self):
-
         self.power_down()
 
     def sdcard_erase_test(self):
-
         self.mount_sd()
         f = 'lib'
         print("trying to erase {} if exits ..".format(f))
@@ -49,7 +47,6 @@ class M5InitTest(M5Init):
         self.release_spi2()
 
     def wifi_test(self):
-
         if not self.is_wifi_connected():
             self.connect_wifi()
         else:
@@ -58,42 +55,47 @@ class M5InitTest(M5Init):
         self.disconnect_wifi()
 
     def imu_test(self):
-
         print("returns a list of samples as a dict of ts, accl, gyro & temp and corresponding uom")
         [print("{}> {}".format(i+1, sample)) for i, sample in enumerate(self.read_imu())]
 
     def hall_test(self):
-
         print("read_hall_sensor ..")
         [print("  {} -> {} {}".format(item[0], item[1][0], item[1][1])) for item in self.read_hall_sensor().items()]
 
     def cpu_temp_test(self):
-
         print("read_raw_temp -> {}".format(self.read_raw_temp()))
 
 
 if __name__ == "__main__":
     """ execute various methods sequentially """
 
-    m5t = M5InitTest()
+    bt = BosTest()
+
+    bt.parms['essid'] = 'T20'
+    bt.parms['pwd'] = 'stacstac'
     
-    m5t.parms['essid'] = 'T20'
-    m5t.parms['pwd'] = 'stacstac'
-    
-    print("parms -> {}".format(m5t.parms))
+    print("parms -> {}".format(bt.parms))
 
     tests = ["wifi_test",
              "imu_test",
              "hall_test",
              "cpu_temp_test",
-             "sdcard_erase_test",
-             "hard_reset_test"]
+             "sdcard_erase_test"]
     try:
         for test in tests:
-            print("\n    ********** {} **********".format(test))
-            func = getattr(m5t, test)
+            print("\n    ********** M5Init {} **********".format(test))
+            func = getattr(bt, test)
             func()
-            print("'{}' completed successfully ..".format(test))
+            print("'{}' in M5Init class completed successfully ..".format(test))
     except Exception as e:
-        print(" oops I blew up ..", e)
-        m5t.hard_reset()
+        print(" oops M5Init class method blew up ..", e)
+        print("PROCEEDING with Bos class methods tests ..")
+
+
+    bt.home_screen()
+    try:
+        bt.run_app()
+    except Exception as e:
+        print("main> oops Bos class method blew up ..", e)
+    finally:
+        os.hard_reset()
