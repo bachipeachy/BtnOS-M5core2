@@ -35,8 +35,8 @@ class Dodl(Bos):
     def app_3(self, uid, x, y):
         """ Doodle app invoked by Btn_3 shows output on btn_w space """
 
-        clr = self.color[Bos.ctx['pallet']]
-        pt = Bos.ctx['pen']
+        clr = self.color[self.ctx['pallet']]
+        pt = self.ctx['pen']
         [[self.tft.pixel(x + i, y + j, clr) for j in range(pt)] for i in range(pt)]
 
     def tsk_35(self, uid, uidt):

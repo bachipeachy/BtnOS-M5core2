@@ -371,6 +371,8 @@ class Bos(M5Init):
                       'fill': True, 'font': font16}}
         self.touch = None
 
+        self.ctx = dict(btn=True, pallet=-1, pen=0)
+
     @property
     def abtns(self):
         return self._abtns
@@ -623,12 +625,12 @@ class Bos(M5Init):
 
         if action == 'Tap' or 'HOLD':
 
-            if Bos.ctx['btn']:
+            if self.ctx['btn']:
                 self.app_screen(uid, self.tbtn1)
-                Bos.ctx['btn'] = False
+                self.ctx['btn'] = False
             else:
                 self.home_screen()
-                Bos.ctx['btn'] = True
+                self.ctx['btn'] = True
 
         else:
             print("b1> Not Implemented ..")
@@ -641,12 +643,12 @@ class Bos(M5Init):
 
         if action == 'Tap' or 'HOLD':
 
-            if Bos.ctx['btn']:
+            if self.ctx['btn']:
                 self.app_screen(uid, self.tbtn2)
-                Bos.ctx['btn'] = False
+                self.ctx['btn'] = False
             else:
                 self.home_screen()
-                Bos.ctx['btn'] = True
+                self.ctx['btn'] = True
         else:
             print("b2> Not Implemented ..")
 
@@ -658,12 +660,12 @@ class Bos(M5Init):
 
         if action == 'Tap' or 'HOLD':
 
-            if Bos.ctx['btn']:
+            if self.ctx['btn']:
                 self.app_screen(uid, self.tbtn3)
-                Bos.ctx['btn'] = False
+                self.ctx['btn'] = False
             else:
                 self.home_screen()
-                Bos.ctx['btn'] = True
+                self.ctx['btn'] = True
         else:
             print("b3> Not Implemented ..")
 
@@ -675,12 +677,12 @@ class Bos(M5Init):
 
         if action == 'Tap' or 'HOLD':
 
-            if Bos.ctx['btn']:
+            if self.ctx['btn']:
                 self.app_screen(uid, self.tbtn4)
-                Bos.ctx['btn'] = False
+                self.ctx['btn'] = False
             else:
                 self.home_screen()
-                Bos.ctx['btn'] = True
+                self.ctx['btn'] = True
         else:
             print("b4> Not Implemented ..")
 
@@ -703,28 +705,28 @@ class Bos(M5Init):
     def pallet(self, uid):
         """ choose current pixel color for drawing - e.g, doodle app """
 
-        if Bos.ctx['pallet'] < len(self.color) - 1:
-            Bos.ctx['pallet'] += 1
+        if self.ctx['pallet'] < len(self.color) - 1:
+            self.ctx['pallet'] += 1
         else:
-            Bos.ctx['pallet'] = 0
+            self.ctx['pallet'] = 0
         txt = ('WHT', 'BLU', 'RED', 'GRN', 'CYAN', 'MGNT', 'YLW', 'BLK')
-        if txt[Bos.ctx['pallet']] == 'BLK':
+        if txt[self.ctx['pallet']] == 'BLK':
             fg = self.WHITE
         else:
             fg = self.BLACK
-        bg = self.color[Bos.ctx['pallet']]
-        self.edit(uid, lbl=txt[Bos.ctx['pallet']], fg=fg, bg=bg)
+        bg = self.color[self.ctx['pallet']]
+        self.edit(uid, lbl=txt[self.ctx['pallet']], fg=fg, bg=bg)
         return bg
 
     def pen(self, uid):
         """ choose pen thickness for drawing - e.g, doodle app """
 
-        if Bos.ctx['pen'] < 9:
-            Bos.ctx['pen'] += 1
+        if self.ctx['pen'] < 9:
+            self.ctx['pen'] += 1
         else:
-            Bos.ctx['pen'] = 1
+            self.ctx['pen'] = 1
 
-        pt = Bos.ctx['pen']
+        pt = self.ctx['pen']
         txt = 'Pen # ' + str(pt)
         loc = self.btns[uid]['loc']
         x1 = loc[0] + int(loc[2] / 4)
