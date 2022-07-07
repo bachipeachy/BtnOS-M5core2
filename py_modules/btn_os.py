@@ -229,8 +229,7 @@ class M5Init:
         """  returns a list of samples as a dict of ts, accl, gyro & temp and corresponding uom """
 
         imu = []
-        if self.parms["imu_calibrate"]:
-            print("* gyro_offset -> {}".format(self.sensor.calibrate()))
+        print("* gyro_offset -> {}".format(self.sensor.calibrate()))
 
         for i in range(self.parms['imu_size']):
             imu.append({'ts': {'val': int(str(time.time_ns())[:-6]), 'uom': 'ms'},
@@ -446,11 +445,11 @@ class Bos(M5Init):
         self.btns = self.define_btns()
         self.btns.update(self.abtns)
         self.edit('btn_w')
-        self.splash()
+        self.home_splash()
         [self.paint(k, v) for k, v in self.btns.items() if k not in ['btn_w', 'btn_a', 'btn_b', 'btn_c']]
         self.touch = self.enable_touch()
 
-    def splash(self):
+    def home_splash(self):
 
         self.tft.rect(8, 48, 304, 144, self.WHITE)
         self.write(tl=["BtnOS"], font=font16, xl=[120], yl=[80])
@@ -756,7 +755,7 @@ class Bos(M5Init):
         writes one record at a time for self.parms['imu_size'] count -- memory friendly """
 
         self.mount_sd()
-        fn = self.parms['mdir'] + self.parms['csv_file']
+        fn = self.parms['mdir'] + "/imu" + str(time.time())[-4:] + ".csv"
         with open(fn, "w") as f:
             gyro_offset = self.sensor.calibrate()
             header = "timestamp,accl_x,accl_y,accl_z,gyro_x,gyro_y,gyro_z,temp\n"
@@ -778,21 +777,8 @@ class Bos(M5Init):
         self.release_spi2()
         return fn, stat, gyro_offset
 
-    """
-    def set_imu_size(self, uid):
-        # choose imu sample size
-        if self.parms['imu_size'] < 1000:
-            self.parms['imu_size'] += 10
-        else:
-            self.parms['imu_size'] = 10
-        loc = self.btns[uid]['loc']
-        self.edit(uid, lbl='imu_size', font=font8)
-        self.write([self.parms['imu_size']], xl=[loc[0] + 28], yl=[loc[1] + 24])
-        return self.parms['imu_size']
-    """
-
     def set_imu_parm(self, uid, parm):
-        """ choose imu sample parm """
+        """ set imu parm value """
         start = None
         stop = None
         inc = None

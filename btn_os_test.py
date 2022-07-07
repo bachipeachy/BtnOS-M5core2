@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from btn_os_p import Bos
+from btn_os import Bos
 
 
 
@@ -71,8 +71,8 @@ if __name__ == "__main__":
 
     bt = BosTest()
 
-    bt.parms['essid'] = 'T20'
-    bt.parms['pwd'] = 'stacstac'
+    bt.parms['essid'] = 'TBD'
+    bt.parms['pwd'] = '????'
     
     print("parms -> {}".format(bt.parms))
 

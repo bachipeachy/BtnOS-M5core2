@@ -23,7 +23,7 @@ SOFTWARE.
 """
 import time
 
-from btn_os_p import Bos
+from btn_os import Bos
 
 
 class Imu(Bos):
@@ -54,18 +54,18 @@ class Imu(Bos):
             self.ctx['tbtn'] = True
 
     def tsk_26(self, uid, uidt):
-        """ Btn_6 sets imu sampling wait time """
+        """ Btn_6 sets imu sampling imu_wait time """
         print("t26> {}:{}".format(uid, uidt))
-        wait = self.set_imu_parm('btn_6', 'imu_wait')
-        print("t26> set imu sampling size {}".format(wait))
-        return wait
-    
+        imu_wait = self.set_imu_parm('btn_6', 'imu_wait')
+        print("t26> set imu sampling imu_size {}".format(imu_wait))
+        return imu_wait
+
     def tsk_27(self, uid, uidt):
-        """ Btn_7 sets imu sampling size """
+        """ Btn_7 sets imu sampling imu_size """
         print("t27> {}:{}".format(uid, uidt))
-        size = self.set_imu_parm('btn_7', 'imu_size')
-        print("t27> set imu sampling size {}".format(size))
-        return size
+        imu_size = self.set_imu_parm('btn_7', 'imu_size')
+        print("t27> set imu sampling imu_size {}".format(imu_size))
+        return imu_size
 
     def tsk_28(self, uid, uidt):
         """ Btn_8 save 'accl', 'gyro' & 'temp' data to SDCard csv format """
@@ -90,7 +90,7 @@ class Imu(Bos):
     def imu_fdback(self, fn, stat):
         """ display feedback from action """
         self.edit('btn_w')
-        tx = [('', 'Processing Details'), ("filename:", fn), ("size:", str(stat[0]) + ' bytes'),
-              ("file_ts:", stat[-1])]
+        tx = [('', 'Processing Details'), ("filename:", fn), ("imu_size:", str(stat[0]) + ' bytes'),
+              ("file_ts:", stat[-1]), ("imu_wait:", self.parms['imu_wait']), ("imu_size:", self.parms['imu_size'])]
         for i, v in enumerate(tx):
             self.write([v[0], v[1]], xl=[0, 80], yl=[46 + i * 16, 46 + i * 16])
