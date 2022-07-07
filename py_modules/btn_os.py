@@ -46,7 +46,7 @@ class M5Init:
         """ auto start power up and tft services """
 
         self._parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_wait': 100, 'imu_size': 10,
-                       'imu_calibrate': False, 'json_file': '/imu.json', 'csv_file': '/imu.csv'}
+                       'json_file': '/imu.json', 'csv_file': '/imu.csv'}
 
         self.BLACK = ili9342c.BLACK
         self.BLUE = ili9342c.BLUE

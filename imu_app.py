@@ -30,46 +30,36 @@ class Imu(Bos):
 
     def __init__(self, **kwargs):
         """ inherit all BtnOS methods and properties """
-
         super(Imu, self).__init__(**kwargs)
 
     def app_2(self, uid, x, y):
         """ 'IMU' app invoked by Btn_2 shows output on btn_w space """
-
         print("a2> {} x:{} y:{}".format(uid, x, y))
-        
 
     def tsk_25(self, uid, uidt):
         """ Btn_5  display imu 'accl' data """
         print("t25> {}:{} -> {}:{}".format(uid, self.btns[uid]['lbl'], uidt, self.tbtn2[uidt]['lbl']))
-        
         if self.ctx['tbtn']:
             self.edit(uidt, lbl='Accl')
             data = 'accl'
             hd = ["accl_x", "accl_y", "accl_z", "m/s/s"]
             self.parms['imu_calibrate'] = False
-            self.imu_data(data, hd, calib="No")
+            self.imu_data(data, hd)
             self.ctx['tbtn'] = False
         else:
             self.edit(uidt, lbl='Gyro')
             data = 'gyro'
             hd = ["gyro_x", "gyro_y", "gyro_z", "deg/s"]
             self.parms['imu_calibrate'] = True
-            self.imu_data(data, hd, calib="Yes")
+            self.imu_data(data, hd)
             self.ctx['tbtn'] = True
 
     def tsk_26(self, uid, uidt):
         """ Btn_6 display imu 'gyro' data """
-
         print("t26> {}:{}".format(uid, uidt))
-        self.parms['size'] = 11
-        self.parms['imu_calibrate'] = True
-        hd = ["gyro_x", "gyro_y", "gyro_z", "deg/s"]
-        self.imu_data(hd, calib="Yes")
 
     def tsk_27(self, uid, uidt):
         """ Btn_7 sets the wait time for imu samples """
-
         print("t27> {}:{}".format(uid, uidt))
         size = self.set_imu_size('btn_7')
         print("t27> set imu sampling size {}".format(size))
@@ -77,33 +67,27 @@ class Imu(Bos):
 
     def tsk_28(self, uid, uidt):
         """ Btn_8 save 'accl', 'gyro' & 'temp' data to SDCard csv format """
-
         print("t28> {}:{}".format(uid, uidt))
         self.write(["saving", self.parms['imu_size'], "samples every", self.parms['imu_wait'], "ms"],
                    xl=[0, 56, 96, 208, 248], yl=[184, 184, 184, 184, 184])
         fn, stat, gyro_offset = self.imu_csv()
-        self.imu_fdback(fn, stat, gyro_offset)
-        
-    
-        
-    def imu_data(self, data, hd, calib):
-        """ display data """
+        self.imu_fdback(fn, stat)
 
+    def imu_data(self, data, hd):
+        """ display data """
         self.edit('btn_w')
         self.write(hd, xl=[8, 112, 208, 280], yl=[48, 48, 48, 48])
         [self.write([v[data]['val'][0], v[data]['val'][1], v[data]['val'][2]],
                     xl=[0, 104, 208], yl=[60 + i * 12, 60 + i * 12, 60 + i * 12])
-         for i, v in enumerate(self.read_imu()) if i<10]
+         for i, v in enumerate(self.read_imu()) if i < 10]
 
-        self.write(
-            ["ts:" + str(time.time()) + " sec, wait:" + str(str(self.parms['imu_wait'])) + " ms, calib:" + calib],
-            yl=[184])
+        self.write(["ts:" + str(time.time()) + " sec, wait:" + str(str(self.parms['imu_wait'])) +
+                    "ms, size:" + str(self.parms['imu_size'])], yl=[184])
 
-    def imu_fdback(self, fn, stat, gyro_offset):
+    def imu_fdback(self, fn, stat):
         """ display feedback from action """
-
         self.edit('btn_w')
         tx = [('', 'Processing Details'), ("filename:", fn), ("size:", str(stat[0]) + ' bytes'),
-              ("file_ts:", stat[-1]), ("gyroCalib:", gyro_offset)]
+              ("file_ts:", stat[-1])]
         for i, v in enumerate(tx):
             self.write([v[0], v[1]], xl=[0, 80], yl=[46 + i * 16, 46 + i * 16])
