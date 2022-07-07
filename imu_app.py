@@ -37,15 +37,26 @@ class Imu(Bos):
         """ 'IMU' app invoked by Btn_2 shows output on btn_w space """
 
         print("a2> {} x:{} y:{}".format(uid, x, y))
+        
 
     def tsk_25(self, uid, uidt):
         """ Btn_5  display imu 'accl' data """
-
-        print("t25> {}:{}".format(uid, uidt))
-        self.parms['imu_wait'] = 500
-        self.parms['imu_calibrate'] = False
-        hd = ["accl_x", "accl_y", "accl_z", "m/s/s"]
-        self.imu_data(hd, calib="No")
+        print("t25> {}:{} -> {}:{}".format(uid, self.btns[uid]['lbl'], uidt, self.tbtn2[uidt]['lbl']))
+        
+        if self.ctx['tbtn']:
+            self.edit(uidt, lbl='Accl')
+            data = 'accl'
+            hd = ["accl_x", "accl_y", "accl_z", "m/s/s"]
+            self.parms['imu_calibrate'] = False
+            self.imu_data(data, hd, calib="No")
+            self.ctx['tbtn'] = False
+        else:
+            self.edit(uidt, lbl='Gyro')
+            data = 'gyro'
+            hd = ["gyro_x", "gyro_y", "gyro_z", "deg/s"]
+            self.parms['imu_calibrate'] = True
+            self.imu_data(data, hd, calib="Yes")
+            self.ctx['tbtn'] = True
 
     def tsk_26(self, uid, uidt):
         """ Btn_6 display imu 'gyro' data """
@@ -73,13 +84,14 @@ class Imu(Bos):
         fn, stat, gyro_offset = self.imu_csv()
         self.imu_fdback(fn, stat, gyro_offset)
         
-    def imu_data(self, hd, calib):
+    
+        
+    def imu_data(self, data, hd, calib):
         """ display data """
 
         self.edit('btn_w')
         self.write(hd, xl=[8, 112, 208, 280], yl=[48, 48, 48, 48])
-
-        [self.write([v['gyro']['val'][0], v['gyro']['val'][1], v['gyro']['val'][2]],
+        [self.write([v[data]['val'][0], v[data]['val'][1], v[data]['val'][2]],
                     xl=[0, 104, 208], yl=[60 + i * 12, 60 + i * 12, 60 + i * 12])
          for i, v in enumerate(self.read_imu()) if i<10]
 

@@ -41,7 +41,7 @@ if __name__ == "__main__":
     [print("M5Init parm {}> {} = {}".format(i + 1, k, v)) for i, (k, v) in enumerate(ap.parms.items())]
 
     ap.install_app(('btn_1', 'WiFi'), btn_5='Wifi', btn_6='Scan', btn_7='TBD', btn_8='Wipe')
-    ap.install_app(('btn_2', 'IMU'), btn_5='Accl', btn_6='Gyro', btn_7='Size', btn_8='CSV')
+    ap.install_app(('btn_2', 'IMU'), btn_5='IMU', btn_6='Gyro', btn_7='Size', btn_8='CSV')
     ap.install_app(('btn_3', 'DoDl'), btn_5='CLR', btn_6='Pen', btn_7='TBD', btn_8='Wipe')
 
     ap.home_screen()

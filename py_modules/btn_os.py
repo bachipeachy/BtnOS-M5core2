@@ -297,7 +297,6 @@ class M5Init:
 
 
 class Bos(M5Init):
-    ctx = dict(btn=True, pallet=-1, pen=0)
 
     def __init__(self):
         """ run app forever until hardware btn_c is 'HELD' for hard reset or haedware btn_a 'HELD' for power down """
@@ -371,7 +370,7 @@ class Bos(M5Init):
                       'fill': True, 'font': font16}}
         self.touch = None
 
-        self.ctx = dict(btn=True, pallet=-1, pen=0)
+        self.ctx = dict(btn=True, tbtn=True, pallet=-1, pen=0)
 
     @property
     def abtns(self):
@@ -478,7 +477,7 @@ class Bos(M5Init):
         self.run_tsk(uid)
 
     def run_app(self):
-        """ outer loop for app selection with task state stored in class dict(ctx) """
+        """ outer loop for app selection with task state stored in dict(ctx) """
 
         while True:
             touched_btn = self.touch.btn_gesture()
