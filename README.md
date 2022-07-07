@@ -16,8 +16,8 @@
 * These apps will now be visible to micropython REPL. Alternatively, they can be frozen into the firmware.
 * apps.py is the startup script for invoking the BtnOS and all installed apps.
 * Run  "apps.py". It installs and runs three (3) of the possile four (4) apps in /lib folder.
-* Monitor the extensive logging output to console.
-* For standalone M5Stack opeation withiut console, save apps.py on to flash memory at root level as main.py
+* Monitor the extensive logging output to console to follow the execution thread.
+* For standalone M5Stack operation without console, save apps.py on to flash memory at root level as main.py
 * On power-up of the hardware, main.py will startup the BtnOS.
 
 ## Overview
