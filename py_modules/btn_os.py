@@ -45,7 +45,7 @@ class M5Init:
     def __init__(self):
         """ auto start power up and tft services """
 
-        self._parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_wait': 100, 'imu_size': 10,
+        self._parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_wait': 0, 'imu_size': 0,
                        'json_file': '/imu.json', 'csv_file': '/imu.csv'}
 
         self.BLACK = ili9342c.BLACK
@@ -456,7 +456,7 @@ class Bos(M5Init):
         self.write(tl=["BtnOS"], font=font16, xl=[120], yl=[80])
         self.write(tl=["(c) bachipeachy"], xl=[96], yl=[104])
         self.write(tl=["version 4"], xl=[124], yl=[120])
-        self.write(tl=["btn_a", "btn_b", "btn_c"], xl=[30, 140, 260], yl=[152, 152, 152], fg=self.YELLOW)        
+        self.write(tl=["btn_a", "btn_b", "btn_c"], xl=[30, 140, 260], yl=[152, 152, 152], fg=self.YELLOW)
         self.write(tl=["shutdown", "homescreen", "rerun"], xl=[18, 120, 260], yl=[164, 164, 164])
         self.write(['O', 'O', 'O'], xl=[40, 152, 272], yl=[172, 172, 172], font=font16, fg=self.RED)
 
@@ -778,19 +778,42 @@ class Bos(M5Init):
         self.release_spi2()
         return fn, stat, gyro_offset
 
+    """
     def set_imu_size(self, uid):
-        """ choose imu sample size """
-
+        # choose imu sample size
         if self.parms['imu_size'] < 1000:
             self.parms['imu_size'] += 10
         else:
             self.parms['imu_size'] = 10
         loc = self.btns[uid]['loc']
-
         self.edit(uid, lbl='imu_size', font=font8)
         self.write([self.parms['imu_size']], xl=[loc[0] + 28], yl=[loc[1] + 24])
-
         return self.parms['imu_size']
+    """
+
+    def set_imu_parm(self, uid, parm):
+        """ choose imu sample parm """
+        start = None
+        stop = None
+        inc = None
+        if parm == 'imu_size':
+            start = 0
+            stop = 1000
+            inc = 20
+        elif parm == 'imu_wait':
+            start = 0
+            stop = 1000
+            inc = 100
+
+        if self.parms[parm] < stop:
+            self.parms[parm] += inc
+        else:
+            self.parms[parm] = start
+
+        loc = self.btns[uid]['loc']
+        self.edit(uid, lbl=parm, font=font8)
+        self.write([self.parms[parm]], xl=[loc[0] + 28], yl=[loc[1] + 24])
+        return self.parms[parm]
 
 
 if __name__ == "__main__":
