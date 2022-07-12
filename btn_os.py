@@ -454,7 +454,7 @@ class Bos(M5Init):
         self.tft.rect(8, 48, 304, 144, self.WHITE)
         self.write(tl=["BtnOS"], font=font16, xl=[120], yl=[80])
         self.write(tl=["(c) bachipeachy"], xl=[96], yl=[104])
-        self.write(tl=["version 4"], xl=[124], yl=[120])
+        self.write(tl=["version 5"], xl=[124], yl=[120])
         self.write(tl=["btn_a", "btn_b", "btn_c"], xl=[30, 140, 260], yl=[152, 152, 152], fg=self.YELLOW)
         self.write(tl=["shutdown", "homescreen", "rerun"], xl=[18, 120, 260], yl=[164, 164, 164])
         self.write(['O', 'O', 'O'], xl=[40, 152, 272], yl=[172, 172, 172], font=font16, fg=self.RED)
@@ -551,9 +551,9 @@ class Bos(M5Init):
         s = str(t[5]) if t[5] > 9 else '0' + str(t[5])
         tm = h + ':' + m + ':' + s
         dt = tm + ' ' + wk[t[6]] + ' ' + mo[t[1] - 1] + ' ' + str(t[2])
-
-        print("cl> clock ", dt)
-        return {'dt': dt, 'tm': tm}
+        clk = {'dt': dt, 'tm': tm}
+        print("cl> clock ", clk)
+        return clk
 
     def paint(self, k, v):
         """ refresh screen for chosen btn """
@@ -801,9 +801,93 @@ class Bos(M5Init):
         self.write([self.parms[parm]], xl=[loc[0] + 28], yl=[loc[1] + 24])
         return self.parms[parm]
 
+    def draw_digit(self, digit=8, x=10, y=50, w=24, h=4, color=None):
+
+        digit = str(digit)
+        if color is None:
+            color = self.GREEN
+        else:
+            color = color
+
+        xa = x + h
+        ya = y
+        wa = w
+        ha = h
+
+        xb = x + w + h
+        yb = y + h
+        wb = h
+        hb = w
+
+        xc = x + w + h
+        yc = y + 2 * h + w
+        wc = h
+        hc = w
+
+        xd = x + h
+        yd = y + 2 * w + 2 * h
+        wd = w
+        hd = h
+
+        xe = x
+        ye = y + 2 * h + w
+        we = h
+        he = w
+
+        xf = x
+        yf = y + h
+        wf = h
+        hf = w
+
+        xg = x + h
+        yg = y + h + w
+        wg = w
+        hg = h
+
+        """
+        '0' = [1, 1, 1, 1, 1, 1, 0]
+        '1' = [0, 1, 1, 0, 0, 0, 0]
+        '2' = [1, 1, 0, 1, 1, 0, 1]
+        '3' = [1, 1, 1, 1, 0, 0, 1]
+        '4' = [0, 1, 1, 0, 0, 1, 1]
+        '5' = [1, 0, 1, 1, 0, 1, 1]
+        '6' = [1, 0, 1, 1, 1, 1, 1]
+        '7' = [1, 1, 1, 0, 0, 0, 0]
+        '8' = [1, 1, 1, 1, 1, 1, 1]
+        '9' = [1, 1, 1, 1, 0, 1, 1]
+        """
+
+        if digit not in ('1', '4'):
+            self.tft.fill_rect(xa, ya, wa, ha, color)
+        else:
+            self.tft.fill_rect(xa, ya, wa, ha, self.BLACK)
+        if digit not in ('5', '6'):
+            self.tft.fill_rect(xb, yb, wb, hb, color)
+        else:
+            self.tft.fill_rect(xb, yb, wb, hb, self.BLACK)
+        if digit != '2':
+            self.tft.fill_rect(xc, yc, wc, hc, color)
+        else:
+            self.tft.fill_rect(xc, yc, wc, hc, self.BLACK)
+        if digit not in ('1', '4', '7'):
+            self.tft.fill_rect(xd, yd, wd, hd, color)
+        else:
+            self.tft.fill_rect(xd, yd, wd, hd, self.BLACK)
+        if digit in ('0', '2', '6', '8'):
+            self.tft.fill_rect(xe, ye, we, he, color)
+        else:
+            self.tft.fill_rect(xe, ye, we, he, self.BLACK)
+        if digit not in ('1', '2', '3', '7'):
+            self.tft.fill_rect(xf, yf, wf, hf, color)
+        else:
+            self.tft.fill_rect(xf, yf, wf, hf, self.BLACK)
+        if digit not in ('0', '1', '7'):
+            self.tft.fill_rect(xg, yg, wg, hg, color)
+        else:
+            self.tft.fill_rect(xg, yg, wg, hg, self.BLACK)
+
 
 if __name__ == "__main__":
-
     os = Bos()
     os.home_screen()
 

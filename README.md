@@ -11,8 +11,10 @@
 
 ## Installation
 * Flash the custom 'firmware.bin' on to M5Stack using, say thonny IDE or by other means.
+* The firware contains Micropython latest stable release plus 'c' and 'py' source files in respective modules folder
+* The btn_os.py and app scripts are not included in the firware to make development process less laborious
 * Create a /lib folder at the root level on M5Stack Core2 internal storage.
-* copy the apps (wifi_app.py, imu_app.py, dodl_app.py) to /lib folder.
+* copy btn_os.py and apps (wifi_app.py, imu_app.py, dodl_app.py) to /lib folder.
 * These apps will now be visible to micropython REPL. Alternatively, they can be frozen into the firmware.
 * apps.py is the startup script for invoking the BtnOS and all installed apps.
 * Run  "apps.py". It installs and runs three (3) of the possile four (4) apps in /lib folder.
@@ -35,6 +37,5 @@
 * Update the startup script apps.py by adding install_app() method as shown in apps.py for other apps.
 * Run apps.py. It installs the apps and starts an infinite outer loop
 * You can gracefully terminate the BtnOS by holding hardware btn_c or shut it down by holding btn_a.
-* If BtnOS bombs (note it is still in dev), it always (?) calls hard_reset() for restart
+* If BtnOS bombs (note it is still in dev), it calls hard_reset() for next restart cycle.
 * If restarts behaves erratically, power down the hardware and restart BtnOS from a known state.
-

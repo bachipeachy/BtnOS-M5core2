@@ -21,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+
+
 from btn_os import Bos
 
 
@@ -84,6 +86,10 @@ class Wifi(Bos):
 
     def tsk_17(self, uid, uidt):
         print("t17> {}:{}".format(uid, uidt))
+        
+        digits = [d for d in self.clock()['tm'] if d != ':']
+        [self.draw_digit(d, 10 + i * 55, y=80, w=24, h=4) for i, d in enumerate(digits[:4])]
+        [self.draw_digit(d, 10 + (i+4) * 55, y=110, w=12, h=2) for i, d in enumerate(digits[4:])]
 
     def tsk_18(self, uid, uidt):
         print("t18> {}:{}".format(uid, uidt))
