@@ -1,223 +1,271 @@
-# Copyright (c) 2020 Mika Tuupola
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of  this software and associated documentation files (the "Software"), to
-# deal in  the Software without restriction, including without limitation the
-# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-# sell copied of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-# https://github.com/tuupola/micropython-mpu6886
-
 """
-MicroPython I2C driver for MPU6886 6-axis motion tracking device
+The MIT License (MIT)
+
+Copyright (c) 2022 bachipeachy@gmail.com
+
+Inspired by work done by Mika Tuupola at https://github.com/tuupola/micropython-mpu6886
+based on MPU6886 user guide ..
+https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/docs/datasheet/core/MPU-6886-000193%2Bv1.1_GHIC_en.pdf
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
 
-__version__ = "0.1.0-dev"
-
-# pylint: disable=import-error
+import sys
 import ustruct
 import utime
 from micropython import const
 
-# pylint: enable=import-error
-
-_CONFIG = const(0x1a)
-_GYRO_CONFIG = const(0x1b)
-_ACCEL_CONFIG = const(0x1c)
-_ACCEL_CONFIG2 = const(0x1d)
-_ACCEL_XOUT_H = const(0x3b)
-_ACCEL_XOUT_L = const(0x3c)
-_ACCEL_YOUT_H = const(0x3d)
-_ACCEL_YOUT_L = const(0x3e)
-_ACCEL_ZOUT_H = const(0x3f)
-_ACCEL_ZOUT_L = const(0x40)
-_TEMP_OUT_H = const(0x41)
-_TEMP_OUT_L = const(0x42)
-_GYRO_XOUT_H = const(0x43)
-_GYRO_XOUT_L = const(0x44)
-_GYRO_YOUT_H = const(0x45)
-_GYRO_YOUT_L = const(0x46)
-_GYRO_ZOUT_H = const(0x47)
-_GYRO_ZOUT_L = const(0x48)
-_PWR_MGMT_1 = const(0x6b)
-_WHO_AM_I = const(0x75)
-
-ACCEL_FS_SEL_2G = const(0b00000000)
-ACCEL_FS_SEL_4G = const(0b00001000)
-ACCEL_FS_SEL_8G = const(0b00010000)
-ACCEL_FS_SEL_16G = const(0b00011000)
-
-_ACCEL_SO_2G = 16384  # 1 / 16384 ie. 0.061 mg / digit
-_ACCEL_SO_4G = 8192  # 1 / 8192 ie. 0.122 mg / digit
-_ACCEL_SO_8G = 4096  # 1 / 4096 ie. 0.244 mg / digit
-_ACCEL_SO_16G = 2048  # 1 / 2048 ie. 0.488 mg / digit
-
-GYRO_FS_SEL_250DPS = const(0b00000000)
-GYRO_FS_SEL_500DPS = const(0b00001000)
-GYRO_FS_SEL_1000DPS = const(0b00010000)
-GYRO_FS_SEL_2000DPS = const(0b00011000)
-
-_GYRO_SO_250DPS = 131
-_GYRO_SO_500DPS = 62.5
-_GYRO_SO_1000DPS = 32.8
-_GYRO_SO_2000DPS = 16.4
-
-_TEMP_SO = 326.8
-_TEMP_OFFSET = 25
-
-SF_G = 1
-SF_M_S2 = 9.80665  # 1 g = 9.80665 m/s2 ie. standard gravity
-SF_DEG_S = 1
-SF_RAD_S = 0.017453292519943  # 1 deg/s is 0.017453292519943 rad/s
-
 
 class MPU6886:
-    """Class which provides interface to MPU6886 6-axis motion tracking device."""
+    """ MPU-6886 is a 6-axis motion tracking device that combines a 3-axis gyroscope and a 3-axis accelerometer """
 
-    def __init__(
-            self, i2c, address=0x68,
-            accel_fs=ACCEL_FS_SEL_2G, gyro_fs=GYRO_FS_SEL_250DPS,
-            accel_sf=SF_M_S2, gyro_sf=SF_RAD_S,
-            gyro_offset=(0, 0, 0)
-    ):
+    # Device specified MPU6886 registers
+    SELF_TEST_X_ACCEL = const(13)
+    SELF_TEST_Y_ACCEL = const(14)
+    SELF_TEST_Z_ACCEL = const(15)
+    GYRO_CONFIG = const(27)
+    ACCEL_CONFIG = const(28)
+    ACCEL_XOUT_H = const(59)
+    TEMP_OUT_H = const(65)
+    GYRO_XOUT_H = const(67)
+    SELF_TEST_X_GYRO = const(80)
+    SELF_TEST_Y_GYRO = const(81)
+    SELF_TEST_Z_GYRO = const(82)
+    PWR_MGMT_1 = const(107)
+    WHO_AM_I = const(117)
+    
+    # in use register mask
+    DEVICE_RESET = b'\x80'
+    GYRO_STANDBY = b'\x10'
+    CLKSEL = b'\x01'
+    
+    # GYRO_CONFIG register masks
+    FS_250DPS = b'\x00'
+    FS_500DPS = b'\x08'
+    FS_1000DPS = b'\x10'
+    FS_2000DPS = b'\x18'
+
+    # ACCEL_CONFIG register masks
+    FS_2G = b'\x00'
+    FS_4G = b'\x08'
+    FS_8G = b'\x10'
+    FS_16G = b'\x18'
+
+    # Self Test masks for X, Y and Z at highest sensor resolution
+    ST_X = b'\x80'
+    ST_Y = b'\x40'
+    ST_Z = b'\x20'
+
+    # temperature constants
+    TEMP_OFFSET = 25
+    TEMP_SO = 326.8
+
+    def __init__(self, i2c, **kwargs):
+        """ initialize and save avg stationary 6-axis sensor readings and tolerance """
+
         self.i2c = i2c
-        self.address = address
+        self._imuparms = {'address': 0x68, 'accel_fs': MPU6886.FS_2G, 'accel_dial': None, 'gyro_fs': MPU6886.FS_250DPS,
+                          'gyro_dial': None, 'SG': 9.800665, 'accel_ft': None, 'gyro_ft': None, 'debug': False}
+        [print("* IGNORING ERROR invalid parm '{}'..".format(k)) for k in kwargs.keys() if
+         k not in self.imuparms.keys()]
 
-        if 0x19 != self.whoami:
+        [self.imuparms.update({k: v}) for k, v in kwargs.items()]
+
+        if self.imuparms['accel_fs'] == MPU6886.FS_2G:
+            self.imuparms['accel_dial'] = 2000
+        elif self.imuparms['accel_fs'] == MPU6886.FS_4G:
+            self.imuparms['accel_dial'] = 4000
+        elif self.imuparms['accel_fs'] == MPU6886.FS_8G:
+            self.imuparms['accel_dial'] = 8000
+        elif self.imuparms['accel_fs'] == MPU6886.FS_16G:
+            self.imuparms['accel_dial'] = 16000
+
+        if self.imuparms['gyro_fs'] == MPU6886.FS_250DPS:
+            self.imuparms['gyro_dial'] = 250
+        elif self.imuparms['gyro_fs'] == MPU6886.FS_500DPS:
+            self.imuparms['gyro_dial'] = 500
+        elif self.imuparms['gyro_fs'] == MPU6886.FS_1000DPS:
+            self.imuparms['gyro_dial'] = 10000
+        elif self.imuparms['gyro_fs'] == MPU6886.FS_2000DPS:
+            self.imuparms['gyro_dial'] = 20000
+
+        # validate existence of IMU
+        if self.reg(MPU6886.WHO_AM_I) != b'\x19':
             raise RuntimeError("MPU6886 not found in I2C bus.")
+        else:
+            if self.imuparms['debug']:
+                print("* IMU id verified")
 
-        self._register_char(_PWR_MGMT_1, 0b10000000)  # reset
-        utime.sleep_ms(100)
-        self._register_char(_PWR_MGMT_1, 0b00000001)  # autoselect clock
+        # clear PWR_MGMT_1 resgister
+        self.reg(MPU6886.PWR_MGMT_1, b'\x00')
 
-        self._accel_so = self._accel_fs(accel_fs)
-        self._gyro_so = self._gyro_fs(gyro_fs)
-        self._accel_sf = accel_sf
-        self._gyro_sf = gyro_sf
-        self._gyro_offset = gyro_offset
+        # Gyro low power mode standby
+        utime.sleep_ms(10)
+        self.reg(MPU6886.PWR_MGMT_1, MPU6886.GYRO_STANDBY)
+
+        # auto select clock
+        utime.sleep_ms(10)
+        self.reg(MPU6886.PWR_MGMT_1, MPU6886.CLKSEL)
+                
+        # set accel full scale 2000 mG
+        utime.sleep_ms(10)
+        self.reg(MPU6886.ACCEL_CONFIG, self.imuparms['accel_fs'])
+        if self.imuparms['debug']:
+            print("* Set acceleration dial@ {} mG".format(self.imuparms['accel_dial']))
+        
+        # set gyr0 full scale 250 dps/s
+        utime.sleep_ms(10)
+        self.reg(MPU6886.GYRO_CONFIG, self.imuparms['gyro_fs'])
+        if self.imuparms['debug']:
+            print("* Set gyro dial@ {} dps/s".format(self.imuparms['gyro_dial']))
+        
+        # save factoy trim for self test
+        self.imuparms['accel_ft'] = self._ft(sensor='accel')
+        self.imuparms['gyro_ft'] = self._ft(sensor='gyro')
+
+        if self.imuparms['debug']:
+            print("* Initialization complete")
 
     @property
-    def acceleration(self):
-        """
-        Acceleration measured by the sensor. By default will return a
-        3-tuple of X, Y, Z axis acceleration values in m/s^2 as floats. Will
-        return values in g if constructor was provided `accel_sf=SF_M_S2`
-        parameter.
-        """
-        so = self._accel_so
-        sf = self._accel_sf
+    def imuparms(self):
+        return self._imuparms
 
-        xyz = self._register_three_shorts(_ACCEL_XOUT_H)
-        return tuple([value / so * sf for value in xyz])
+    @imuparms.setter
+    def imuparms(self, value):
+        self._imuparms = value
 
-    @property
-    def gyro(self):
-        """
-        X, Y, Z radians per second as floats.
-        """
-        so = self._gyro_so
-        sf = self._gyro_sf
-        ox, oy, oz = self._gyro_offset
+    def reg(self, r, val=None, nbytes=1):
+        """ read and write 'val if not None' into register for specified num of bytes """
 
-        xyz = self._register_three_shorts(_GYRO_XOUT_H)
-        xyz = [value / so * sf for value in xyz]
-
-        xyz[0] -= ox
-        xyz[1] -= oy
-        xyz[2] -= oz
-
-        return tuple(xyz)
+        if val is not None:
+            self.i2c.writeto_mem(self.imuparms['address'], r, val)
+        utime.sleep_ms(1)
+        byt = self.i2c.readfrom_mem(self.imuparms['address'], r, nbytes)
+        if nbytes == 6:
+            byt = ustruct.unpack(">hhh", byt)
+        elif nbytes == 2:
+            byt = ustruct.unpack(">h", byt)
+        if self.imuparms['debug']:
+            print("* reg#{} {} bytes -> {}".format(r, nbytes, byt))
+        return byt
 
     @property
     def temperature(self):
-        """
-        Die temperature in celcius as a float.
-        """
-        temp = self._register_short(_TEMP_OUT_H)
-        # return ((temp - _TEMP_OFFSET) / _TEMP_SO) + _TEMP_OFFSET
-        return (temp / _TEMP_SO) + _TEMP_OFFSET
+        """ Die temperature in deg F  """
+
+        t = self.reg(MPU6886.TEMP_OUT_H, nbytes=2)[0]
+        t = (t / MPU6886.TEMP_SO) + MPU6886.TEMP_OFFSET
+        t = round(((1.8 * t) + 32), 1)
+        if self.imuparms['debug']:
+            print("* imu temperature deg F -> ", t)
+        return t
 
     @property
-    def whoami(self):
-        """ Value of the whoami register. """
-        return self._register_char(_WHO_AM_I)
+    def accel(self):
+        """ returns tuple of X, Y, Z axis acceleration values mg (milli SG) as int """
 
-    def calibrate(self, count=256, delay=0):
-        ox, oy, oz = (0.0, 0.0, 0.0)
-        self._gyro_offset = (0.0, 0.0, 0.0)
-        n = float(count)
+        xyz = self.reg(MPU6886.ACCEL_XOUT_H, nbytes=6)
+        result = tuple([int(self.imuparms['accel_dial'] * val / 32768) for val in xyz])
+        if self.imuparms['debug']:
+            print("  accl -> {} @fs = {} mG".format(result, self.imuparms['accel_dial']))
+        return result
 
-        while count:
-            utime.sleep_ms(delay)
-            gx, gy, gz = self.gyro
-            ox += gx
-            oy += gy
-            oz += gz
-            count -= 1
+    @property
+    def gyro(self):
+        """ returns tuple of X, Y, Z axis gyro values in deg/sec as int. """
 
-        self._gyro_offset = (ox / n, oy / n, oz / n)
-        return self._gyro_offset
+        xyz = self.reg(MPU6886.GYRO_XOUT_H, nbytes=6)
+        gyro = tuple([int(self.imuparms['gyro_dial'] * val / 32768) for val in xyz])
+        if self.imuparms['debug']:
+            print("  gyro -> {} @fs = {} dps".format(gyro, self.imuparms['gyro_dial']))
+        return gyro
 
-    def _register_short(self, register, value=None, buf=bytearray(2)):
-        if value is None:
-            self.i2c.readfrom_mem_into(self.address, register, buf)
-            return ustruct.unpack(">h", buf)[0]
+    def _ft(self, sensor):
+        """ returns factory trim values as a 3-int tuple for self test in UOM og mg or dps """
+        dial = None
+        if sensor == 'accel':
+            dial = 2000
+        elif sensor == 'gyro':
+            dial = 250
 
-        ustruct.pack_into(">h", buf, 0, value)
-        return self.i2c.writeto_mem(self.address, register, buf)
+        trim = []
+        xyz = [getattr(MPU6886, 'SELF_TEST_' + axis + sensor.upper()) for axis in ('X_', 'Y_', 'Z_')]
 
-    def _register_three_shorts(self, register, buf=bytearray(6)):
-        self.i2c.readfrom_mem_into(self.address, register, buf)
-        return ustruct.unpack(">hhh", buf)
+        tuple([trim.append(int(dial * int.from_bytes(v, sys.byteorder) / 32768))
+               for v in [self.reg(r) for r in xyz]])
 
-    def _register_char(self, register, value=None, buf=bytearray(1)):
-        if value is None:
-            self.i2c.readfrom_mem_into(self.address, register, buf)
-            return buf[0]
+        print("* IMU {} factory trims x, y, z -> {} {}".format(sensor, trim, 'mG' if sensor == 'accel' else 'dps'))
+        return trim
 
-        ustruct.pack_into("<b", buf, 0, value)
-        return self.i2c.writeto_mem(self.address, register, buf)
+    def _st(self, sensor):
+        """ return self test response 'res' -> difference in readings with self test enabled and disabled """
 
-    def _accel_fs(self, value):
-        self._register_char(_ACCEL_CONFIG, value)
+        r = getattr(MPU6886, sensor.upper() + '_CONFIG')
 
-        # Return the sensitivity divider
-        if ACCEL_FS_SEL_2G == value:
-            return _ACCEL_SO_2G
-        elif ACCEL_FS_SEL_4G == value:
-            return _ACCEL_SO_4G
-        elif ACCEL_FS_SEL_8G == value:
-            return _ACCEL_SO_8G
-        elif ACCEL_FS_SEL_16G == value:
-            return _ACCEL_SO_16G
+        enabled = []
+        for i, mask in enumerate((MPU6886.ST_X, MPU6886.ST_Y, MPU6886.ST_Z)):
+            self.reg(r, mask)
+            utime.sleep_ms(10)
+            enabled.append(getattr(self, sensor)[i])
 
-    def _gyro_fs(self, value):
-        self._register_char(_GYRO_CONFIG, value)
+        fs = None
+        if sensor == 'accel':
+            fs = MPU6886.FS_2G
+        elif sensor == 'gyro':
+            fs = MPU6886.FS_250DPS
+        self.reg(r, fs)
+        utime.sleep_ms(10)
+        disabled = getattr(self, sensor)
 
-        # Return the sensitivity divider
-        if GYRO_FS_SEL_250DPS == value:
-            return _GYRO_SO_250DPS
-        elif GYRO_FS_SEL_500DPS == value:
-            return _GYRO_SO_500DPS
-        elif GYRO_FS_SEL_1000DPS == value:
-            return _GYRO_SO_1000DPS
-        elif GYRO_FS_SEL_2000DPS == value:
-            return _GYRO_SO_2000DPS
+        st_r = tuple(x - y for x, y in zip(enabled, disabled))
+        self.reg(r, self.imuparms[sensor + '_fs'])
 
-    def __enter__(self):
-        return self
+        print("* {} self test response x, y, z -> {} {}\n  should be less than factory trim values -> {}".format(
+            sensor, st_r, 'mG' if sensor == 'accel' else 'dps', self.imuparms[sensor + '_ft']))
 
-    def __exit__(self, exception_type, exception_value, traceback):
-        pass
+        return st_r
+
+    def selftest_experimental(self, sensor='accel', tolerance=None):
+        """ compares self test response with factory trim for equality within specified allowable tolerance """
+
+        if sensor not in ('accel', 'gyro'):
+            print("* no implementation for sensor = {}".format(sensor))
+            return
+        else:
+            if tolerance is None:
+                if sensor == 'accel':
+                    tolerance = 40
+                elif sensor == 'gyro':
+                    tolerance = 1
+
+        st = [abs(v) for v in getattr(self, '_st')(sensor=sensor)]
+
+        if max(st) > 2 * tolerance:
+            result = {0: "failed", 1: "failed", 2: "failed"}
+
+            ft = self.imuparms[sensor + '_ft']
+            [result.update({i: "passed"}) for i, (x, y) in enumerate(zip(st, ft)) if x <= y]
+            result = tuple(result.values())
+            print("* {} selftest x, y, z -> {}, allowable tolerance of 2*{} {}".format(
+                sensor, result, tolerance, 'mG' if sensor == 'accel' else 'dps'))
+            return result
+        else:
+            print("* {} test passed\n"
+                  "  the max self test response of {} is within allowable tolerance of 2*{}"
+                  .format(sensor, max(st), tolerance))

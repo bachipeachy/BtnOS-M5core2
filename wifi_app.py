@@ -53,7 +53,7 @@ class Wifi(Bos):
             self.write(["disconnected -> " + ip], yl=[96])
             self.edit('btn_5', bg=self.RED)
         else:
-            self.write(["connecting to '" + self.parms['essid'] + "' with 15 sec timeout"], yl=[96])
+            self.write(["connecting to '" + self.m5parms['essid'] + "' with 15 sec timeout"], yl=[96])
             ip = self.connect_wifi()
             self.edit('btn_w')
             self.write(["got ip address -> " + ip], yl=[96])

@@ -27,6 +27,10 @@
 
 ![Image](https://github.com/bachipeachy/BtnOS-M5core2/blob/master/btn_os.pdf).
 
+### Screenshots
+##### In folder jpg
+##### 1_homescreen.jpg##### 2_wifi_scan.jpg##### 3_wifi_clok.jpg##### 4-imu_accl.jpg##### 5_imu_gyro.jpg##### 6_imu_csv.jpg##### 7_dodl.jpg
+
 ## Steps to add your own App
 * As an example, consider app_4.py provided with the distro.
 * app_4.py represents an app template that has minimum required skeletal methods used by a typical app.

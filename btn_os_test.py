@@ -56,7 +56,9 @@ class BosTest(Bos):
 
     def imu_test(self):
         print("returns a list of samples as a dict of ts, accl, gyro & temp and corresponding uom")
-        [print("{}> {}".format(i+1, sample)) for i, sample in enumerate(self.read_imu())]
+        self.m5parms['imu_size'] = 1
+        [[print("  {} -> {}".format(k, v)) for k, v in sample.items()]
+         for sample in self.read_imu()]
 
     def hall_test(self):
         print("read_hall_sensor ..")
@@ -71,10 +73,10 @@ if __name__ == "__main__":
 
     bt = BosTest()
 
-    bt.parms['essid'] = 'TBD'
-    bt.parms['pwd'] = '????'
+    bt.m5parms['essid'] = 'TBD'
+    bt.m5parms['pwd'] = 'xxxx'
     
-    print("parms -> {}".format(bt.parms))
+    print("m5parms -> {}".format(bt.m5parms))
 
     tests = ["wifi_test",
              "imu_test",

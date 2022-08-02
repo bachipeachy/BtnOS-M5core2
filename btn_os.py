@@ -36,7 +36,7 @@ import axp202c
 import vga1_16x16 as font16
 import vga1_8x8 as font8
 from focaltouch import FocalTouch
-from mpu6886 import MPU6886, SF_DEG_S
+from mpu6886 import MPU6886
 from sdcard import SDCard
 
 
@@ -45,7 +45,7 @@ class M5Init:
     def __init__(self):
         """ auto start power up and tft services """
 
-        self._parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_wait': 0, 'imu_size': 0,
+        self._m5parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_wait': 0, 'imu_size': 0,
                        'json_file': '/imu.json', 'csv_file': '/imu.csv'}
 
         self.BLACK = ili9342c.BLACK
@@ -60,19 +60,19 @@ class M5Init:
         self.i2c = SoftI2C(scl=Pin(22), sda=Pin(21))
         self.axp = self.power_up()
         self.spi2 = SPI(2, sck=Pin(18), mosi=Pin(23), miso=Pin(38))
-        self.sensor = MPU6886(self.i2c, gyro_sf=SF_DEG_S)
+        self.sensor = MPU6886(self.i2c)
         self.tft = self.enable_tft()
 
         self.greet()
         print("* M5Stack Core2 initialization complete")
 
     @property
-    def parms(self):
-        return self._parms
+    def m5parms(self):
+        return self._m5parms
 
-    @parms.setter
-    def parms(self, value):
-        self._parms = value
+    @m5parms.setter
+    def m5parms(self, value):
+        self._m5parms = value
 
     def power_up(self):
         """ turn on M5Stack Core2 """
@@ -119,12 +119,12 @@ class M5Init:
         try:
             sdc = SDCard()
             vfs = uos.VfsFat(sdc)
-            uos.mount(vfs, self.parms['mdir'])
+            uos.mount(vfs, self.m5parms['mdir'])
             print("* Flash Memory root level listing -> {}\nSDCard root files {} -> {}".format(
-                uos.listdir(), self.parms['mdir'], uos.listdir(self.parms['mdir'])))
+                uos.listdir(), self.m5parms['mdir'], uos.listdir(self.m5parms['mdir'])))
         except OSError as e:
             if e.errno == errno.EPERM:
-                print("{} already mounted".format(self.parms['mdir']))
+                print("{} already mounted".format(self.m5parms['mdir']))
         except Exception as e:
             print("ERROR: {}".format(e))
 
@@ -158,10 +158,10 @@ class M5Init:
         wlan.active(True)
         i = 15
         if not wlan.isconnected():
-            print("* connecting to wireless '{}' with {} sec timeout ...".format(self.parms['essid'], i))
+            print("* connecting to wireless '{}' with {} sec timeout ...".format(self.m5parms['essid'], i))
 
             try:
-                wlan.connect(self.parms['essid'], self.parms['pwd'])
+                wlan.connect(self.m5parms['essid'], self.m5parms['pwd'])
             except Exception as e:
                 print("ERROR: {} .. check or missing/wrong essid/pwd info\nStand by ..".format(e))
 
@@ -175,7 +175,7 @@ class M5Init:
         if run:
             print("* wifi connection established -> {}".format(wlan.ifconfig()[0]))
         else:
-            print("* unable to connect to SSID-> '{}'".format(self.parms['essid']))
+            print("* unable to connect to SSID-> '{}'".format(self.m5parms['essid']))
         return wlan.ifconfig()[0]
 
     @staticmethod
@@ -229,14 +229,13 @@ class M5Init:
         """  returns a list of samples as a dict of ts, accl, gyro & temp and corresponding uom """
 
         imu = []
-        print("* gyro_offset -> {}".format(self.sensor.calibrate()))
 
-        for i in range(self.parms['imu_size']):
+        for i in range(self.m5parms['imu_size']):
             imu.append({'ts': {'val': int(str(time.time_ns())[:-6]), 'uom': 'ms'},
-                        'accl': {'val': self.sensor.acceleration, 'uom': 'm/s/s'},
+                        'accl': {'val': self.sensor.accel, 'uom': 'm/s/s'},
                         'gyro': {'val': self.sensor.gyro, 'uom': 'deg/s'},
-                        'temp': {'val': round(self.sensor.temperature * 1.8 + 32, 1), 'uom': 'F'}})
-            time.sleep_ms(self.parms['imu_wait'])
+                        'temp': {'val': self.sensor.temperature, 'uom': 'F'}})
+            time.sleep_ms(self.m5parms['imu_wait'])
         return imu
 
     @staticmethod
@@ -256,7 +255,7 @@ class M5Init:
 
         try:
             print("* contents in sdcard before erase {} -> {}".format(
-                self.parms['mdir'], uos.listdir(self.parms['mdir'])))
+                self.m5parms['mdir'], uos.listdir(self.m5parms['mdir'])))
 
         except Exception as e:
             print("ERROR: {}".format(e))
@@ -265,27 +264,27 @@ class M5Init:
             path = '/' + path
 
         try:
-            uos.remove(self.parms['mdir'] + path)
-            print("* success removed'{}'".format(self.parms['mdir'] + path))
+            uos.remove(self.m5parms['mdir'] + path)
+            print("* success removed'{}'".format(self.m5parms['mdir'] + path))
             print("* contents in sdcard after erase {} -> {}".format(
-                self.parms['mdir'], uos.listdir(self.parms['mdir'])))
+                self.m5parms['mdir'], uos.listdir(self.m5parms['mdir'])))
 
         except OSError as e:
             if e.errno == errno.ENOENT:
-                print("ERRPR: {} erase failed did not find '{}'".format(e, self.parms['mdir'] + path))
+                print("ERRPR: {} erase failed did not find '{}'".format(e, self.m5parms['mdir'] + path))
             else:
                 print("* checking if path '{}' is a dir".format(path))
             if e.errno == errno.EISDIR:
                 try:
-                    ct = len([f for f in uos.listdir(self.parms['mdir'] + path)])
+                    ct = len([f for f in uos.listdir(self.m5parms['mdir'] + path)])
                     if ct == 0:
-                        uos.rmdir(self.parms['mdir'] + path)
-                        print("* success removed empty dir {}".format(self.parms['mdir'] + path))
+                        uos.rmdir(self.m5parms['mdir'] + path)
+                        print("* success removed empty dir {}".format(self.m5parms['mdir'] + path))
                         print("* contents in sdcard after erase {} -> {}".format(
-                            self.parms['mdir'], uos.listdir(self.parms['mdir'])))
+                            self.m5parms['mdir'], uos.listdir(self.m5parms['mdir'])))
                     else:
                         print("{}: dir '{}' is not empty has {} entry -> {}".format(
-                            e, self.parms['mdir'] + path, ct, uos.listdir(self.parms['mdir'] + path)))
+                            e, self.m5parms['mdir'] + path, ct, uos.listdir(self.m5parms['mdir'] + path)))
                 except Exception as e:
                     print("ERROR: {}".format(e))
             else:
@@ -738,44 +737,42 @@ class Bos(M5Init):
 
     def imu_json(self):
         """ save 'ts', 'accl', 'gyro', and 'temp' sensor vals to SDCard as '/sd/imu.json'.
-        writes all records at a time for self.parms['imu_size'] count -- memory intensive  """
+        writes all records at a time for self.m5parms['imu_size'] count -- memory intensive  """
 
         self.mount_sd()
-        fn = self.parms['mdir'] + self.parms['json_file']
+        fn = self.m5parms['mdir'] + self.m5parms['json_file']
         with open(fn, "w") as f:
-            gyro_offset = self.sensor.calibrate()
             json.dump(self.read_imu(), f)
 
         stat = uos.stat(fn)[-4:]
         self.release_spi2()
-        return fn, stat, gyro_offset
+        return fn, stat
 
     def imu_csv(self):
         """ save 'ts', 'accl', 'gyro', and 'temp' sensor vals to SDCard as '/sd/imu.csv'.
-        writes one record at a time for self.parms['imu_size'] count -- memory friendly """
+        writes one record at a time for self.m5parms['imu_size'] count -- memory friendly """
 
         self.mount_sd()
-        fn = self.parms['mdir'] + "/imu" + str(time.time())[-4:] + ".csv"
+        fn = self.m5parms['mdir'] + "/imu" + str(time.time())[-4:] + ".csv"
         with open(fn, "w") as f:
-            gyro_offset = self.sensor.calibrate()
             header = "timestamp,accl_x,accl_y,accl_z,gyro_x,gyro_y,gyro_z,temp\n"
             f.write(header)
             print(header, end='')
-            for n in range(self.parms['imu_size']):
+            for n in range(self.m5parms['imu_size']):
                 ts = int(str(time.time_ns())[:-6])
-                accl = self.sensor.acceleration
+                accl = self.sensor.accel
                 gyro = self.sensor.gyro
-                temp = round(self.sensor.temperature * 1.8 + 32, 1)
+                temp = self.sensor.temperature
 
                 line = str(ts) + ',' + str(accl[0]) + ',' + str(accl[1]) + ',' + str(accl[2]) \
                        + ',' + str(gyro[0]) + ',' + str(gyro[1]) + ',' + str(gyro[2]) + ',' + str(temp) + '\n'
                 f.write(line)
                 print(n + 1, '>', line, end='')
-                time.sleep_ms(self.parms['imu_size'])
+                time.sleep_ms(self.m5parms['imu_size'])
 
         stat = uos.stat(fn)[-4:]
         self.release_spi2()
-        return fn, stat, gyro_offset
+        return fn, stat
 
     def set_imu_parm(self, uid, parm):
         """ set imu parm value """
@@ -791,15 +788,15 @@ class Bos(M5Init):
             stop = 1000
             inc = 100
 
-        if self.parms[parm] < stop:
-            self.parms[parm] += inc
+        if self.m5parms[parm] < stop:
+            self.m5parms[parm] += inc
         else:
-            self.parms[parm] = start
+            self.m5parms[parm] = start
 
         loc = self.btns[uid]['loc']
         self.edit(uid, lbl=parm, font=font8)
-        self.write([self.parms[parm]], xl=[loc[0] + 28], yl=[loc[1] + 24])
-        return self.parms[parm]
+        self.write([self.m5parms[parm]], xl=[loc[0] + 28], yl=[loc[1] + 24])
+        return self.m5parms[parm]
 
     def draw_digit(self, digit=8, x=10, y=50, w=24, h=4, color=None):
 
@@ -888,6 +885,9 @@ class Bos(M5Init):
 
 
 if __name__ == "__main__":
+    """ basic test for btn_os """
+    
+    print("main> running basic button tests, press btns..")
     os = Bos()
     os.home_screen()
 

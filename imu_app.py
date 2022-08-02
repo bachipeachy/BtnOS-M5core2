@@ -43,7 +43,7 @@ class Imu(Bos):
         if self.ctx['tbtn']:
             self.edit(uidt, lbl='Accl')
             data = 'accl'
-            hd = ["accl_x", "accl_y", "accl_z", "m/s/s"]
+            hd = ["accl_x", "accl_y", "accl_z", "mG"]
             self.imu_data(data, hd)
             self.ctx['tbtn'] = False
         else:
@@ -71,9 +71,9 @@ class Imu(Bos):
         """ Btn_8 save 'accl', 'gyro' & 'temp' data to SDCard csv format """
         print("t28> {}:{}".format(uid, uidt))
         self.edit('btn_w')
-        self.write(["saving", self.parms['imu_size'], "samples every", self.parms['imu_wait'], "ms"],
+        self.write(["saving", self.m5parms['imu_size'], "samples every", self.m5parms['imu_wait'], "ms"],
                    xl=[0, 56, 96, 208, 248], yl=[184, 184, 184, 184, 184])
-        fn, stat, gyro_offset = self.imu_csv()
+        fn, stat = self.imu_csv()
         self.imu_fdback(fn, stat)
 
     def imu_data(self, data, hd):
@@ -84,13 +84,13 @@ class Imu(Bos):
                     xl=[0, 104, 208], yl=[60 + i * 12, 60 + i * 12, 60 + i * 12])
          for i, v in enumerate(self.read_imu()) if i < 10]
 
-        self.write(["ts:" + str(time.time()) + " sec, wait:" + str(str(self.parms['imu_wait'])) +
-                    "ms, size:" + str(self.parms['imu_size'])], yl=[184])
+        self.write(["ts:" + str(time.time()) + " sec, wait:" + str(str(self.m5parms['imu_wait'])) +
+                    "ms, size:" + str(self.m5parms['imu_size'])], yl=[184])
 
     def imu_fdback(self, fn, stat):
         """ display feedback from action """
         self.edit('btn_w')
         tx = [('', 'Processing Details'), ("filename:", fn), ("imu_size:", str(stat[0]) + ' bytes'),
-              ("file_ts:", stat[-1]), ("imu_wait:", self.parms['imu_wait']), ("imu_size:", self.parms['imu_size'])]
+              ("file_ts:", stat[-1]), ("imu_wait:", self.m5parms['imu_wait']), ("imu_size:", self.m5parms['imu_size'])]
         for i, v in enumerate(tx):
             self.write([v[0], v[1]], xl=[0, 80], yl=[46 + i * 16, 46 + i * 16])

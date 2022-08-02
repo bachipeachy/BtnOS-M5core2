@@ -36,9 +36,9 @@ class Apps(Wifi, Dodl, Imu):
 if __name__ == "__main__":
 
     ap = Apps()
-    ap.parms['essid'] = 'TBD'
-    ap.parms['pwd'] = '????'
-    [print("M5Init parm {}> {} = {}".format(i + 1, k, v)) for i, (k, v) in enumerate(ap.parms.items())]
+    ap.m5parms['essid'] = 'TBD'
+    ap.m5parms['pwd'] = '????'
+    [print("M5Init parm {}> {} = {}".format(i + 1, k, v)) for i, (k, v) in enumerate(ap.m5parms.items())]
 
     ap.install_app(('btn_1', 'WiFi'), btn_5='Wifi', btn_6='Scan', btn_7='Clk', btn_8='Wipe')
     ap.install_app(('btn_2', 'IMU'), btn_5='IMU', btn_6='Wait', btn_7='Size', btn_8='CSV')
