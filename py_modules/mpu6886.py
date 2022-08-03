@@ -51,7 +51,6 @@ class MPU6886:
     WHO_AM_I = const(117)
     
     # in use register mask
-    DEVICE_RESET = b'\x80'
     GYRO_STANDBY = b'\x10'
     CLKSEL = b'\x01'
     
@@ -112,28 +111,27 @@ class MPU6886:
             if self.imuparms['debug']:
                 print("* IMU id verified")
 
-        # clear PWR_MGMT_1 resgister
-        self.reg(MPU6886.PWR_MGMT_1, b'\x00')
-
         # Gyro low power mode standby
-        utime.sleep_ms(10)
         self.reg(MPU6886.PWR_MGMT_1, MPU6886.GYRO_STANDBY)
+        utime.sleep_ms(100)
+        if self.imuparms['debug']:
+            print("* Set gyro in lowpower standby mode..")
 
         # auto select clock
-        utime.sleep_ms(10)
         self.reg(MPU6886.PWR_MGMT_1, MPU6886.CLKSEL)
-                
-        # set accel full scale 2000 mG
-        utime.sleep_ms(10)
+        if self.imuparms['debug']:
+            print("* set autoselect clock..")
+
+            # set accel full scale 2000 mG
         self.reg(MPU6886.ACCEL_CONFIG, self.imuparms['accel_fs'])
         if self.imuparms['debug']:
-            print("* Set acceleration dial@ {} mG".format(self.imuparms['accel_dial']))
+            print("* set acceleration dial@ {} mG".format(self.imuparms['accel_dial']))
         
         # set gyr0 full scale 250 dps/s
         utime.sleep_ms(10)
         self.reg(MPU6886.GYRO_CONFIG, self.imuparms['gyro_fs'])
         if self.imuparms['debug']:
-            print("* Set gyro dial@ {} dps/s".format(self.imuparms['gyro_dial']))
+            print("* set gyro dial@ {} dps/s".format(self.imuparms['gyro_dial']))
         
         # save factoy trim for self test
         self.imuparms['accel_ft'] = self._ft(sensor='accel')
@@ -269,3 +267,4 @@ class MPU6886:
             print("* {} test passed\n"
                   "  the max self test response of {} is within allowable tolerance of 2*{}"
                   .format(sensor, max(st), tolerance))
+

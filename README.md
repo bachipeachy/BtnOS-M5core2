@@ -1,21 +1,22 @@
 # BtnOS-M5core2
-* Button Operating System (BtnOS) is a touch enabled event/action framework runs on M5Stack Core2 hardware.
+* Button Operating System (BtnOS) is a touch enabled event/action framework that runs on M5Stack Core2 hardware.
 ## Introduction
 * Button Operating System (BtnOS) is a touch enabled event/action framework that runs on M5Stack Core2 hardware.
-* The 'Bos' python class implemented in /py_modules/btn_os.py can execute up to four(4) individual apps.
+* The 'Bos' python class implemented in btn_os.py can execute up to four(4) individual apps.
 * The home_screen() provides access to these apps.
 * The apps run one at a time inside a single event/action inner loop.
-* Once an app is selected, it calls an app_screen() associated with the selected app.
-* The app_sceen() allows a choice of up to four (4) individual tasks that may be associated with the app.
-* The app runs in its own inner "task loop" until "exit" btn is touched for going' back to home_screen()
+* Once an app is gestured, it calls an app_screen() associated with the selected app.
+* The app_sceen() allows gesturing up to four (4) individual task buttons that perform app defined functions.
+* The app runs in its own inner "task loop" until "exit" btn is gestured which ends the task loop and calls the home_screen() for gesturing other apps.
 
 ## Installation
 * Flash the custom 'firmware.bin' on to M5Stack using, say thonny IDE or by other means.
-* The firware contains Micropython latest stable release plus 'c' and 'py' source files in respective modules folder
-* The btn_os.py and app scripts are not included in the firware to make development process less laborious
-* Create a /lib folder at the root level on M5Stack Core2 internal storage.
-* copy btn_os.py and apps (wifi_app.py, imu_app.py, dodl_app.py) to /lib folder.
-* These apps will now be visible to micropython REPL. Alternatively, they can be frozen into the firmware.
+* The firmware contains Micropython latest stable release (1.19) and other required 'c' and 'py' source files in respective modules folder.
+* The btn_os.py and app scripts are not included in the firmware to make development process less laborious
+* Create a /lib folder at the root level on M5Stack Core2 flash storage.
+* Copy python scripts for btn_os and apps (wifi, imu and dodl) to the M5 /lib folder. Note, the script app4 is simply a template for user apps. It is not installed as an app.
+* The module list can be inspected in REPL using help('modules'). Alternatively, they can be frozen into the firmware if the space permits.
+* The scripts installed in /lib can be imported into user pythgon scripts.
 * apps.py is the startup script for invoking the BtnOS and all installed apps.
 * Run  "apps.py". It installs and runs three (3) of the possile four (4) apps in /lib folder.
 * Monitor the extensive logging output to console to follow the execution thread.

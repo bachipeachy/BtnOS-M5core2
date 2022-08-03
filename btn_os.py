@@ -42,12 +42,16 @@ from sdcard import SDCard
 
 class M5Init:
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """ auto start power up and tft services """
 
-        self._m5parms = {'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_wait': 0, 'imu_size': 0,
+        self._m5parms = {'autoboot': None, 'essid': None, 'pwd': None, 'mdir': '/sd', 'imu_wait': 0, 'imu_size': 0,
                        'json_file': '/imu.json', 'csv_file': '/imu.csv'}
-
+        [print("* IGNORING ERROR invalid parm '{}'..".format(k)) for k in kwargs.keys() if
+         k not in self.m5parms.keys()]
+        
+        self.m5parms['autoboot'] = self.is_autoboot_on()
+        
         self.BLACK = ili9342c.BLACK
         self.BLUE = ili9342c.BLUE
         self.RED = ili9342c.RED
@@ -141,6 +145,16 @@ class M5Init:
         self.tft.text(font16, "M5Core2> initialized!", 0, 0, ili9342c.WHITE, ili9342c.BLACK)
 
     @staticmethod
+    def is_autoboot_on():
+        """ set autoboot status """
+
+        if "main.py" in uos.listdir():
+            flag = True
+        else:
+            flag = False
+        return flag
+
+    @staticmethod
     def is_wifi_connected():
         """ returns True or False of wifi connection status """
 
@@ -232,7 +246,7 @@ class M5Init:
 
         for i in range(self.m5parms['imu_size']):
             imu.append({'ts': {'val': int(str(time.time_ns())[:-6]), 'uom': 'ms'},
-                        'accl': {'val': self.sensor.accel, 'uom': 'm/s/s'},
+                        'accl': {'val': self.sensor.accel, 'uom': 'mG'},
                         'gyro': {'val': self.sensor.gyro, 'uom': 'deg/s'},
                         'temp': {'val': self.sensor.temperature, 'uom': 'F'}})
             time.sleep_ms(self.m5parms['imu_wait'])
@@ -292,6 +306,7 @@ class M5Init:
 
         except Exception as e:
             print("ERROR: {}".format(e))
+
 
 
 class Bos(M5Init):
@@ -439,6 +454,18 @@ class Bos(M5Init):
             print("Error parm '{}' not in btn_1 thro' btn_4 ".format(app[0]))
             self.hard_reset()
 
+    def write_bootstate(self):
+
+        fg = None
+        txt = None
+        if self.m5parms['autoboot']:
+            txt = "Autoboot ON "
+            fg = self.GREEN
+        else:
+            txt = "Autoboot OFF"
+            fg = self.RED
+        self.write(tl=[txt], xl=[120], yl=[164], fg=fg)
+
     def home_screen(self):
 
         self.btns = self.define_btns()
@@ -455,8 +482,9 @@ class Bos(M5Init):
         self.write(tl=["(c) bachipeachy"], xl=[96], yl=[104])
         self.write(tl=["version 5"], xl=[124], yl=[120])
         self.write(tl=["btn_a", "btn_b", "btn_c"], xl=[30, 140, 260], yl=[152, 152, 152], fg=self.YELLOW)
-        self.write(tl=["shutdown", "homescreen", "rerun"], xl=[18, 120, 260], yl=[164, 164, 164])
-        self.write(['O', 'O', 'O'], xl=[40, 152, 272], yl=[172, 172, 172], font=font16, fg=self.RED)
+        self.write(tl=["Shutdown", "Rerun"], xl=[20, 260], yl=[164, 164])
+        self.write_bootstate()
+        self.write(['O', 'O', 'O'], xl=[40, 152, 270], yl=[172, 172, 172], font=font16, fg=self.RED)
 
     def app_screen(self, uid, tbtn):
 
@@ -581,8 +609,18 @@ class Bos(M5Init):
 
     def btn_b(self, btn):
 
-        if btn['btn_b']['action'] is not None:
-            self.home_screen()
+        if btn['btn_b']['action'] == 'HOLD':
+            try:
+                uos.rename('main.py', 'main')
+                self.m5parms['autoboot'] = False
+                print("bb> Disabled Autoboot M5..")
+            except OSError as e:
+                uos.rename('main', 'main.py')
+                self.m5parms['autoboot'] = True
+                print("bb> Enabled Autoboot M5..")
+            self.write_bootstate()
+        else:
+            print("bb>  Not Implemented ..")
 
     def btn_c(self, btn):
 
@@ -605,7 +643,8 @@ class Bos(M5Init):
             self.tft.fill_rect(0, 0, 320, 40, self.BLACK)
             self.tft.text(font16, self.clock()['dt'], 0, 12, self.YELLOW, self.BLACK)
 
-    def btn_w(self, btn):
+    @staticmethod
+    def btn_w(btn):
 
         uid = list(btn.keys())[0]
         loc = btn[uid]['loc']

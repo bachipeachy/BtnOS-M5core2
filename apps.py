@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     ap = Apps()
     ap.m5parms['essid'] = 'TBD'
-    ap.m5parms['pwd'] = '????'
+    ap.m5parms['pwd'] = 'xxxx'
     [print("M5Init parm {}> {} = {}".format(i + 1, k, v)) for i, (k, v) in enumerate(ap.m5parms.items())]
 
     ap.install_app(('btn_1', 'WiFi'), btn_5='Wifi', btn_6='Scan', btn_7='Clk', btn_8='Wipe')
